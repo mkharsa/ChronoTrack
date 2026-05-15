@@ -27,14 +27,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 /* HEADER */
 header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);padding:0 16px;
-  display:flex;align-items:center;gap:0;box-shadow:0 1px 8px rgba(0,0,0,0.06);height:58px}
+  display:flex;align-items:center;height:58px;box-shadow:0 1px 8px rgba(0,0,0,0.06)}
 .logo-wrap{display:flex;align-items:center;gap:10px;flex:1}
 .logo-icon{width:32px;height:32px;background:var(--blue-dim);border:1px solid var(--blue);border-radius:9px;
   display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .logo-text .sub{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
 .logo-text .main{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;color:var(--text);line-height:1}
-.ble-badge{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;border:1px solid;
-  font-size:10px;font-weight:500;transition:all .3s;white-space:nowrap}
+.ble-badge{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;border:1px solid;font-size:10px;font-weight:500;white-space:nowrap}
 .ble-badge.connected{color:var(--blue);border-color:var(--blue);background:var(--blue-dim)}
 .ble-badge.disconnected{color:var(--red);border-color:var(--red);background:var(--red-dim)}
 .ble-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -44,16 +43,16 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:150;
   background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);
-  border-top:1px solid rgba(0,0,0,0.08);display:flex;
-  padding:8px 0 20px;box-shadow:0 -4px 20px rgba(0,0,0,0.06)}
+  border-top:1px solid rgba(0,0,0,0.08);display:flex;padding:8px 0 20px;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.06)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:6px 4px;cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif}
 .nav-btn .ni{font-size:20px;transition:transform .2s}
-.nav-btn .nl{font-size:10px;font-weight:500;color:var(--muted);transition:color .2s}
+.nav-btn .nl{font-size:10px;font-weight:500;color:var(--muted)}
 .nav-btn.active .nl{color:var(--blue);font-weight:600}
 .nav-btn.active .ni{transform:scale(1.1)}
-.nav-indicator{width:20px;height:2px;border-radius:2px;background:var(--blue);margin:0 auto 2px;opacity:0;transition:opacity .2s}
-.nav-btn.active .nav-indicator{opacity:1}
+.nav-ind{width:20px;height:2px;border-radius:2px;background:var(--blue);margin:0 auto 2px;opacity:0}
+.nav-btn.active .nav-ind{opacity:1}
 
 /* VIEWS */
 .view{display:none;flex-direction:column;padding-bottom:90px}
@@ -66,32 +65,59 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .btn-primary:active{opacity:0.8}
 
-/* SESSIONS */
+/* ── SESSIONS LIST ── */
 .sessions-list{padding:0 16px;display:flex;flex-direction:column;gap:10px}
+
+/* Barre de sélection multiple */
+.multi-sel-bar{display:none;margin:0 16px 8px;padding:10px 14px;
+  background:var(--red-dim);border:1px solid rgba(214,40,57,0.2);border-radius:10px;
+  align-items:center;gap:10px}
+.multi-sel-bar.show{display:flex}
+.multi-sel-count{flex:1;font-size:13px;font-weight:600;color:var(--red)}
+.multi-del-btn{padding:7px 14px;border-radius:8px;background:var(--red);border:none;
+  color:white;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.multi-del-btn:active{opacity:0.8}
+.multi-cancel-btn{padding:7px 14px;border-radius:8px;background:transparent;
+  border:1px solid rgba(214,40,57,0.3);color:var(--red);font-family:'DM Sans',sans-serif;
+  font-size:13px;cursor:pointer}
+
 .session-card{background:var(--bg2);border:1px solid rgba(0,0,0,0.08);border-radius:14px;
-  overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;align-items:center}
+  overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;align-items:stretch;
+  transition:border-color .2s}
+.session-card.sel-mode-checked{border-color:var(--red);background:#fff8f8}
+.session-sel-check{width:44px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;cursor:pointer;display:none}
+.sel-mode .session-sel-check{display:flex}
+.sel-checkbox{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--faint);
+  background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.session-card.sel-mode-checked .sel-checkbox{background:var(--red);border-color:var(--red)}
+.sel-checkbox svg{display:none;width:12px;height:12px}
+.session-card.sel-mode-checked .sel-checkbox svg{display:block}
+
 .session-card-body{flex:1;padding:14px 0 14px 14px;display:flex;align-items:center;gap:12px;
-  cursor:pointer;min-width:0;transition:background .15s}
+  cursor:pointer;min-width:0}
 .session-card-body:active{background:var(--bg3)}
 .session-icon{width:42px;height:42px;border-radius:11px;background:var(--blue-dim);
   border:1px solid rgba(0,119,182,0.2);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .session-info{flex:1;min-width:0}
 .session-name{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.session-meta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;
+.session-meta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;
   background:var(--blue-dim);color:var(--blue);font-size:10px;font-weight:600}
-.session-arrow{color:var(--faint);font-size:20px;padding-right:4px}
-.session-del-btn{width:48px;height:100%;display:flex;align-items:center;justify-content:center;
+.tag.green{background:var(--green-dim);color:var(--green)}
+.session-arrow{color:var(--faint);font-size:20px;padding-right:12px}
+.session-del-btn{width:46px;display:flex;align-items:center;justify-content:center;
   background:var(--red-dim);border:none;border-left:1px solid rgba(214,40,57,0.15);
-  cursor:pointer;font-size:17px;color:var(--red);flex-shrink:0;transition:background .2s}
+  cursor:pointer;font-size:17px;color:var(--red);flex-shrink:0}
 .session-del-btn:active{background:rgba(214,40,57,0.18)}
+.sel-mode .session-del-btn{display:none}
 
 .empty-state{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:10px;text-align:center}
 .empty-state .ei{font-size:48px}
 .empty-state .ep{font-size:14px;color:var(--muted);font-weight:500}
 .empty-state .es{font-size:12px;color:var(--faint)}
 
-/* CHRONO VIEW */
+/* ── CHRONO VIEW ── */
 .topbar{padding:10px 16px;display:flex;align-items:center;gap:10px;
   background:var(--bg2);border-bottom:1px solid rgba(0,0,0,0.06);
   position:sticky;top:58px;z-index:90}
@@ -101,7 +127,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .back-btn:active{background:var(--faint)}
 .topbar-info{flex:1;min-width:0}
 .topbar-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar-date{font-size:11px;color:var(--muted)}
+.topbar-sub{font-size:11px;color:var(--muted);margin-top:1px}
 .icon-btn{width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;
   color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
   flex-shrink:0;box-shadow:0 2px 10px rgba(0,119,182,0.3)}
@@ -115,44 +141,48 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 
 #participants-list{padding:0 16px;display:flex;flex-direction:column;gap:10px;min-height:80px}
 
-/* PARTICIPANT CARD */
+/* ── PARTICIPANT CARD ── */
 .p-card{background:var(--bg2);border:1px solid rgba(0,0,0,0.08);border-radius:14px;overflow:hidden;
-  transition:border-color .2s,background .2s;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.05)}
+  transition:border-color .2s;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.05)}
 .p-card.selected{background:#f0f7ff;border-color:var(--blue)}
 .p-card.running{border-color:rgba(0,119,182,0.45)}
-.p-card-main{padding:14px;display:flex;align-items:center;gap:12px}
+.p-card-main{padding:12px 14px;display:flex;align-items:center;gap:12px}
 .p-checkbox{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--faint);
   background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
 .p-card.selected .p-checkbox{background:var(--blue);border-color:var(--blue)}
 .p-checkbox svg{display:none;width:12px;height:12px}
 .p-card.selected .p-checkbox svg{display:block}
-.p-avatar{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--faint);background:var(--bg3);
+.p-avatar{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--faint);background:var(--bg3);
   display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;
-  font-size:16px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .3s}
+  font-size:15px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .3s}
 .p-card.running .p-avatar{border-color:var(--blue);background:var(--blue-dim);color:var(--blue)}
 .p-info{flex:1;min-width:0}
-.p-name{font-size:15px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-status{font-size:11px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px}
-.p-status .dot{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:blink 1.2s infinite}
-.p-time{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--muted);
+.p-name{font-size:14px;font-weight:600;color:var(--text)}
+.p-status{font-size:11px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.p-status .dot{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:blink 1.2s infinite;flex-shrink:0}
+.rep-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:8px;
+  background:var(--green-dim);color:var(--green);font-size:10px;font-weight:700}
+.p-time{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--muted);
   letter-spacing:1px;flex-shrink:0;transition:color .3s}
 .p-card.running .p-time{color:var(--blue)}
-/* Distance badge sur la carte */
-.p-dist-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;
-  background:var(--green-dim);color:var(--green);font-size:10px;font-weight:600;margin-left:6px}
-.p-actions{border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;display:none;
-  justify-content:space-between;background:var(--bg3)}
+
+/* Historique des répétitions */
+.p-reps{border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;background:var(--bg3);display:none}
+.p-card.has-reps .p-reps{display:block}
+.reps-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.reps-grid{display:flex;flex-wrap:wrap;gap:4px}
+.rep-chip{font-family:'DM Mono',monospace;font-size:11px;padding:3px 8px;border-radius:6px;
+  background:white;border:1px solid rgba(0,0,0,0.08);color:var(--text)}
+.rep-avg{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--green);
+  background:var(--green-dim);padding:3px 9px;border-radius:6px}
+
+/* Actions */
+.p-actions{border-top:1px solid rgba(0,0,0,0.05);padding:7px 14px;display:none;
+  justify-content:flex-end;background:var(--bg3);gap:8px}
 .p-card.show-actions .p-actions{display:flex}
 .p-action-btn{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:500;
   background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px}
-.p-action-btn.lap{color:var(--blue)}
 .p-action-btn.reset{color:var(--muted)}
-.p-laps{border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;background:var(--bg3);display:none}
-.p-card.has-laps .p-laps{display:block}
-.lap-row{display:flex;align-items:center;padding:3px 0;font-size:12px}
-.lap-num{color:var(--muted);width:45px}
-.lap-time{color:var(--cyan);font-family:'DM Mono',monospace;font-weight:500}
-.lap-total{color:var(--faint);font-family:'DM Mono',monospace;font-size:11px;margin-left:auto}
 
 /* IOT PANEL */
 .iot-panel{position:fixed;bottom:70px;left:0;right:0;background:rgba(255,255,255,0.97);
@@ -168,36 +198,33 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .iot-btn .bi{font-size:17px}.iot-btn .bl{font-size:9px;font-weight:700;letter-spacing:0.8px}
 .iot-btn.start{color:var(--blue);border-color:rgba(0,119,182,0.35);background:var(--blue-dim);flex:3}
 .iot-btn.stop{color:var(--red);border-color:rgba(214,40,57,0.35);background:var(--red-dim);flex:3}
-.iot-btn.lap{color:var(--yellow);border-color:rgba(224,122,0,0.35);background:var(--yellow-dim);flex:2}
 .iot-btn.reset{color:var(--muted);border-color:rgba(0,0,0,0.1);background:var(--bg3);flex:2}
 
-/* CALENDRIER */
+/* ── CALENDRIER ── */
 .cal-nav{display:flex;align-items:center;gap:10px;padding:12px 16px 8px}
 .cal-month-label{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);flex:1;text-align:center}
 .cal-arrow{width:34px;height:34px;border-radius:9px;border:1px solid rgba(0,0,0,0.1);
   background:var(--bg2);color:var(--muted);font-size:16px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.cal-arrow:active{background:var(--bg3)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 12px}
 .cal-dow{text-align:center;font-size:10px;font-weight:600;color:var(--muted);padding:6px 0;text-transform:uppercase;letter-spacing:0.5px}
 .cal-day{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;cursor:pointer;transition:all .15s;position:relative;gap:2px}
+  justify-content:center;cursor:pointer;transition:all .15s;gap:2px}
 .cal-day:active{transform:scale(0.92)}
 .cal-day.empty{cursor:default}
 .cal-day .dn{font-size:14px;font-weight:500;color:var(--text);line-height:1}
-.cal-day.other-month .dn{color:var(--faint)}
 .cal-day.today{background:var(--blue-dim);border:1.5px solid var(--blue)}
 .cal-day.today .dn{color:var(--blue);font-weight:700}
 .cal-day.selected{background:var(--blue)}
 .cal-day.selected .dn{color:white}
-.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.cal-dot{width:5px;height:5px;border-radius:50%;background:var(--blue)}
 .cal-day.selected .cal-dot{background:rgba(255,255,255,0.7)}
 .cal-day-detail{margin:10px 16px;background:var(--bg2);border:1px solid rgba(0,0,0,0.08);
   border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:none}
 .cal-day-detail.show{display:block}
 .cal-day-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.06)}
 .cal-day-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
-.cal-day-date{font-size:11px;color:var(--muted)}
+.cal-day-sub{font-size:11px;color:var(--muted)}
 .series-list{padding:8px 14px;display:flex;flex-direction:column;gap:8px}
 .serie-card{background:var(--bg3);border-radius:10px;padding:10px 12px}
 .serie-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -205,29 +232,31 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .serie-avg{font-family:'DM Mono',monospace;font-size:13px;color:var(--green);font-weight:500}
 .serie-rows{display:flex;flex-direction:column;gap:4px}
 .serie-row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:white;border-radius:8px;border:1px solid rgba(0,0,0,0.06)}
-.serie-row-avatar{width:24px;height:24px;border-radius:50%;background:var(--blue-dim);
-  border:1px solid rgba(0,119,182,0.2);display:flex;align-items:center;justify-content:center;
-  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
+.serie-row-av{width:24px;height:24px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(0,119,182,0.2);
+  display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
 .serie-row-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
-.serie-row-time{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text)}
-.serie-row-toggle{width:28px;height:28px;border-radius:7px;border:1.5px solid;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;flex-shrink:0;background:transparent}
-.serie-row-toggle.include{border-color:var(--green);color:var(--green);background:var(--green-dim)}
-.serie-row-toggle.exclude{border-color:var(--faint);color:var(--faint)}
+.serie-row-time{font-family:'DM Mono',monospace;font-size:13px;color:var(--text)}
+.serie-row-toggle{width:26px;height:26px;border-radius:6px;border:1.5px solid;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:transparent}
+.serie-row-toggle.inc{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.serie-row-toggle.exc{border-color:var(--faint);color:var(--faint)}
 
-/* PROGRESSION */
+/* ── PROGRESSION ── */
 .prog-filters{padding:8px 16px;display:flex;gap:8px;overflow-x:auto}
 .prog-filters::-webkit-scrollbar{display:none}
 .filter-chip{padding:6px 14px;border-radius:20px;border:1px solid rgba(0,0,0,0.1);
-  background:var(--bg2);color:var(--muted);font-size:12px;font-weight:500;
-  cursor:pointer;white-space:nowrap;flex-shrink:0}
+  background:var(--bg2);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .filter-chip.active{background:var(--blue);border-color:var(--blue);color:white}
+.prog-view-toggle{display:flex;gap:6px;margin:0 16px 10px}
+.vtb{flex:1;padding:7px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);
+  background:var(--bg3);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+.vtb.active{background:var(--blue);border-color:var(--blue);color:white}
 .prog-section{padding:0 16px;margin-bottom:16px}
 .prog-card{background:var(--bg2);border:1px solid rgba(0,0,0,0.08);border-radius:14px;
   overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);margin-bottom:10px}
-.prog-card-header{padding:12px 14px;display:flex;align-items:center;gap:10px;
+.prog-card-hdr{padding:12px 14px;display:flex;align-items:center;gap:10px;
   border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer}
-.prog-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-dim);
+.prog-av{width:36px;height:36px;border-radius:50%;background:var(--blue-dim);
   border:1.5px solid rgba(0,119,182,0.25);display:flex;align-items:center;justify-content:center;
   font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--blue);flex-shrink:0}
 .prog-name{flex:1;font-size:15px;font-weight:600;color:var(--text)}
@@ -235,8 +264,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .prog-card.open .prog-toggle{transform:rotate(90deg)}
 .prog-body{display:none;padding:12px 14px}
 .prog-card.open .prog-body{display:block}
-.prog-dist-section{margin-bottom:14px}
-.prog-dist-label{font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.prog-dist-sec{margin-bottom:14px}
+.prog-dist-lbl{font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
 .prog-table{width:100%;border-collapse:collapse}
 .prog-table th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:4px 6px;text-align:left;border-bottom:1px solid rgba(0,0,0,0.06)}
 .prog-table td{font-size:12px;padding:6px 6px;border-bottom:1px solid rgba(0,0,0,0.04);color:var(--text)}
@@ -245,12 +274,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .prog-delta{font-size:11px;font-weight:600;padding:2px 6px;border-radius:6px}
 .prog-delta.better{color:var(--green);background:var(--green-dim)}
 .prog-delta.worse{color:var(--red);background:var(--red-dim)}
-.prog-view-toggle{display:flex;gap:6px;margin:0 16px 10px}
-.view-toggle-btn{flex:1;padding:7px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);
-  background:var(--bg3);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
-.view-toggle-btn.active{background:var(--blue);border-color:var(--blue);color:white}
 
-/* MODALS */
+/* ── MODALS ── */
 .modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.3);
   backdrop-filter:blur(8px);display:flex;align-items:flex-end;
   opacity:0;pointer-events:none;transition:opacity .25s}
@@ -269,13 +294,9 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .modal-input::placeholder{color:var(--muted)}
 .modal-btns{display:flex;gap:10px;margin-top:6px}
 .modal-btn{flex:1;padding:13px;border-radius:11px;border:1px solid;font-family:'DM Sans',sans-serif;
-  font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s}
-.modal-btn:active{opacity:0.7}
+  font-size:14px;font-weight:500;cursor:pointer}
 .modal-btn.cancel{background:var(--bg3);border-color:rgba(0,0,0,0.1);color:var(--muted)}
 .modal-btn.confirm{background:var(--blue);border-color:var(--blue);color:white}
-.modal-btn.danger{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-
-/* Picker */
 .picker-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:8px}
 .picker-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
   border:1px solid rgba(0,0,0,0.08);background:var(--bg3);cursor:pointer;transition:all .15s}
@@ -285,7 +306,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0}
 .picker-nm{flex:1;font-size:14px;font-weight:500;color:var(--text)}
 .picker-ck{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--faint);
-  background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+  background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .picker-item.sel .picker-ck{background:var(--blue);border-color:var(--blue)}
 .picker-ck svg{display:none;width:11px;height:11px}
 .picker-item.sel .picker-ck svg{display:block}
@@ -297,27 +318,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .picker-add-row input::placeholder{color:var(--muted)}
 .picker-add-btn{padding:9px 13px;border-radius:8px;background:var(--blue-dim);
   border:1px solid rgba(0,119,182,0.2);color:var(--blue);font-size:13px;font-weight:500;cursor:pointer}
-
-/* MODAL DISTANCE après STOP */
-.stop-dist-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.stop-dist-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
-  background:var(--bg3);border:1px solid rgba(0,0,0,0.08)}
-.stop-dist-av{width:30px;height:30px;border-radius:50%;background:var(--blue-dim);
-  border:1px solid rgba(0,119,182,0.15);display:flex;align-items:center;justify-content:center;
-  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0}
-.stop-dist-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
-.stop-dist-time{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)}
-.stop-dist-toggle{width:26px;height:26px;border-radius:6px;border:1.5px solid;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;flex-shrink:0;background:transparent}
-.stop-dist-toggle.inc{border-color:var(--green);color:var(--green);background:var(--green-dim)}
-.stop-dist-toggle.exc{border-color:var(--faint);color:var(--faint)}
 .dist-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.dist-preset{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);
-  color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.dist-preset{padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer}
 .dist-preset.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
-.dist-preset:active{opacity:0.7}
-
-/* Série inputs */
 .serie-p-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
 .serie-p-row:last-child{border-bottom:none}
 .serie-p-av{width:28px;height:28px;border-radius:50%;background:var(--blue-dim);
@@ -328,14 +332,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;text-align:center}
 .serie-p-input:focus{border-color:var(--blue)}
 
-/* TOAST */
-.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-20px);
-  background:var(--text);border-radius:10px;padding:10px 16px;font-size:13px;color:white;
-  white-space:nowrap;opacity:0;transition:all .3s;z-index:400;pointer-events:none;
-  box-shadow:0 4px 16px rgba(0,0,0,0.15)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* CONFIRM DIALOG */
+/* CONFIRM */
 .confirm-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.4);
   display:flex;align-items:center;justify-content:center;padding:20px;
   opacity:0;pointer-events:none;transition:opacity .2s}
@@ -349,6 +346,13 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .confirm-btn{flex:1;padding:11px;border-radius:10px;border:1px solid;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
 .confirm-btn.cancel{background:var(--bg3);border-color:rgba(0,0,0,0.1);color:var(--muted)}
 .confirm-btn.danger{background:var(--red);border-color:var(--red);color:white}
+
+/* TOAST */
+.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-20px);
+  background:var(--text);border-radius:10px;padding:10px 16px;font-size:13px;color:white;
+  white-space:nowrap;opacity:0;transition:all .3s;z-index:400;pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -374,7 +378,15 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
       <div class="view-title">Mes sessions</div>
       <div class="view-subtitle" id="sessions-subtitle">Aucune session</div>
     </div>
-    <button class="btn-primary" onclick="openNewSessionModal()">+ Nouvelle</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" style="background:var(--bg3);color:var(--muted);border:1px solid rgba(0,0,0,0.1)" id="btn-sel-mode" onclick="toggleSelMode()">☑ Sélectionner</button>
+      <button class="btn-primary" onclick="openNewSessionModal()">+ Nouvelle</button>
+    </div>
+  </div>
+  <div class="multi-sel-bar" id="multi-sel-bar">
+    <span class="multi-sel-count" id="multi-sel-count">0 sélectionné(s)</span>
+    <button class="multi-cancel-btn" onclick="toggleSelMode()">Annuler</button>
+    <button class="multi-del-btn" onclick="deleteSelected()">🗑 Supprimer</button>
   </div>
   <div class="sessions-list" id="sessions-list">
     <div class="empty-state" id="empty-sessions">
@@ -391,7 +403,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
     <button class="back-btn" onclick="goBackToSessions()">← Sessions</button>
     <div class="topbar-info">
       <div class="topbar-name" id="chrono-name">—</div>
-      <div class="topbar-date" id="chrono-date">—</div>
+      <div class="topbar-sub" id="chrono-sub">—</div>
     </div>
     <button class="icon-btn" onclick="openAddModal()">+</button>
   </div>
@@ -405,8 +417,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
     <div class="iot-label">🔵 <span id="iot-label-text">Boîtier IoT non connecté</span></div>
     <div class="iot-btns">
       <button class="iot-btn start" id="btn-start" onclick="startSelected()" disabled><span class="bi">▶</span><span class="bl">START</span></button>
-      <button class="iot-btn stop"  id="btn-stop"  onclick="stopAndAskDist()"  disabled><span class="bi">⏹</span><span class="bl">STOP</span></button>
-      <button class="iot-btn lap"   id="btn-lap"   onclick="lapAll()"        disabled><span class="bi">🚩</span><span class="bl">LAP</span></button>
+      <button class="iot-btn stop"  id="btn-stop"  onclick="stopSelected()"  disabled><span class="bi">⏹</span><span class="bl">STOP</span></button>
       <button class="iot-btn reset"                onclick="resetAll()"             ><span class="bi">↺</span><span class="bl">RESET</span></button>
     </div>
   </div>
@@ -417,13 +428,12 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   <div class="view-header">
     <div>
       <div class="view-title">Calendrier</div>
-      <div class="view-subtitle">Saisis des temps manuellement par jour</div>
+      <div class="view-subtitle">Consulter et modifier les séries</div>
     </div>
   </div>
-  <div style="margin:0 16px 10px;padding:10px 14px;background:var(--blue-dim);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--blue);line-height:1.6">
-    📌 Sélectionne un jour pour voir ou ajouter des séries.<br>
-    Une <strong>série</strong> = une distance + les temps de chaque participant.<br>
-    Tu peux choisir quels temps comptent dans la <strong>moyenne de progression</strong>.
+  <div style="margin:0 16px 10px;padding:10px 14px;background:var(--blue-dim);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--blue);line-height:1.7">
+    📌 Clique sur un jour pour voir les séries enregistrées.<br>
+    Tu peux <strong>exclure un temps</strong> de la moyenne en appuyant sur ✓.
   </div>
   <div class="cal-nav">
     <button class="cal-arrow" onclick="calPrev()">‹</button>
@@ -435,7 +445,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
     <div class="cal-day-header">
       <div>
         <div class="cal-day-title" id="cal-day-title">—</div>
-        <div class="cal-day-date" id="cal-day-date-label">—</div>
+        <div class="cal-day-sub" id="cal-day-sub">—</div>
       </div>
       <button class="btn-primary" onclick="openAddSerieModal()" style="font-size:12px;padding:7px 12px">+ Série</button>
     </div>
@@ -453,23 +463,17 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   </div>
   <div class="prog-filters" id="prog-dist-filters"></div>
   <div class="prog-view-toggle">
-    <button class="view-toggle-btn active" id="toggle-seance" onclick="setProgView('seance')">Par séance</button>
-    <button class="view-toggle-btn" id="toggle-mois" onclick="setProgView('mois')">Par mois</button>
+    <button class="vtb active" id="toggle-seance" onclick="setProgView('seance')">Par séance</button>
+    <button class="vtb" id="toggle-mois" onclick="setProgView('mois')">Par mois</button>
   </div>
   <div class="prog-section" id="prog-content"></div>
 </div>
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <button class="nav-btn active" id="nav-sessions" onclick="navigate('sessions')">
-    <div class="nav-indicator"></div><span class="ni">📋</span><span class="nl">Sessions</span>
-  </button>
-  <button class="nav-btn" id="nav-calendar" onclick="navigate('calendar')">
-    <div class="nav-indicator"></div><span class="ni">📅</span><span class="nl">Calendrier</span>
-  </button>
-  <button class="nav-btn" id="nav-prog" onclick="navigate('prog')">
-    <div class="nav-indicator"></div><span class="ni">📈</span><span class="nl">Progression</span>
-  </button>
+  <button class="nav-btn active" id="nav-sessions" onclick="navigate('sessions')"><div class="nav-ind"></div><span class="ni">📋</span><span class="nl">Sessions</span></button>
+  <button class="nav-btn" id="nav-calendar" onclick="navigate('calendar')"><div class="nav-ind"></div><span class="ni">📅</span><span class="nl">Calendrier</span></button>
+  <button class="nav-btn" id="nav-prog" onclick="navigate('prog')"><div class="nav-ind"></div><span class="ni">📈</span><span class="nl">Progression</span></button>
 </div>
 
 <!-- MODAL : NOUVELLE SESSION -->
@@ -481,8 +485,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
       <input class="modal-input" id="ns-name" type="text" placeholder="Ex : 10x400m, Endurance 5km..." oninput="nsAutoDetectDist()">
     </div>
     <div class="modal-section">
-      <label class="modal-label">Distance par défaut <span style="color:var(--muted);font-weight:400;text-transform:none">(pré-remplie au STOP)</span></label>
-      <div class="dist-presets" id="ns-dist-presets" style="margin-bottom:8px"></div>
+      <label class="modal-label">Distance par défaut <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:10px">(pré-remplie au STOP)</span></label>
+      <div class="dist-presets" id="ns-dist-presets"></div>
       <input class="modal-input" id="ns-default-dist" type="text" placeholder="Ex : 400m, 50m, 1km... (optionnel)">
     </div>
     <div class="modal-section">
@@ -528,12 +532,12 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   <div class="modal">
     <h3>Quelle distance ?</h3>
     <div class="modal-section">
-      <div class="dist-presets" id="dist-presets" style="margin-bottom:10px"></div>
+      <div class="dist-presets" id="dist-presets"></div>
       <input class="modal-input" id="stop-dist-input" type="text" placeholder="Ex: 50m, 400m, 1km...">
-      <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Tous les temps seront inclus dans la moyenne. Tu peux modifier ça dans le Calendrier.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Modifiable dans le Calendrier</div>
     </div>
     <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closeModal('modal-stop-dist');finalizeStop()">Ignorer</button>
+      <button class="modal-btn cancel" onclick="closeModal('modal-stop-dist')">Ignorer</button>
       <button class="modal-btn confirm" onclick="confirmStopDist()">Enregistrer ›</button>
     </div>
   </div>
@@ -544,7 +548,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   <div class="modal">
     <h3>Nouvelle série</h3>
     <div class="modal-section">
-      <label class="modal-label">Distance unitaire</label>
+      <label class="modal-label">Distance</label>
       <input class="modal-input" id="serie-dist" type="text" placeholder="Ex : 50m, 100m, 1km...">
     </div>
     <div class="modal-section">
@@ -561,7 +565,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 <!-- CONFIRM DELETE -->
 <div class="confirm-overlay" id="confirm-delete">
   <div class="confirm-box">
-    <div class="confirm-title">Supprimer la session ?</div>
+    <div class="confirm-title">Supprimer ?</div>
     <div class="confirm-msg" id="confirm-delete-msg">Cette action est irréversible.</div>
     <div class="confirm-btns">
       <button class="confirm-btn cancel" onclick="closeConfirm()">Annuler</button>
@@ -600,71 +604,55 @@ try {
 
 window._db = db;
 
-// FB helpers
-window.fbSaveSession  = async (s) => { if(!db)return; await setDoc(doc(db,'sessions',s.id),{name:s.name,date:s.date,defaultDist:s.defaultDist||null,createdAt:serverTimestamp()},{merge:true}); };
-window.fbDeleteSession= async (id)=> { if(!db)return; await deleteDoc(doc(db,'sessions',id)); };
-window.fbSaveGlobalP  = async (p) => { if(!db)return; await setDoc(doc(db,'participants',p.id),{name:p.name},{merge:true}); };
-window.fbSaveSessP    = async (sid,p) => { if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,elapsed:p.elapsed,isRunning:false,startTime:null,laps:p.laps},{merge:true}); };
-window.fbSaveSerie    = async (dateKey,serie) => { if(!db)return; await setDoc(doc(db,'series',dateKey+'_'+serie.id),{dateKey,id:serie.id,dist:serie.dist,entries:serie.entries,createdAt:serverTimestamp()}); };
+window.fbSaveSession   = async (s)     => { if(!db)return; await setDoc(doc(db,'sessions',s.id),{name:s.name,date:s.date,defaultDist:s.defaultDist||null,createdAt:serverTimestamp()},{merge:true}); };
+window.fbDeleteSession = async (id)    => { if(!db)return; await deleteDoc(doc(db,'sessions',id)); };
+window.fbSaveGlobalP   = async (p)     => { if(!db)return; await setDoc(doc(db,'participants',p.id),{name:p.name},{merge:true}); };
+window.fbSaveSessP     = async (sid,p) => { if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,elapsed:p.elapsed,isRunning:false,startTime:null,laps:p.laps,lastDist:p.lastDist||null},{merge:true}); };
+window.fbSaveSerie     = async (dateKey,serie) => { if(!db)return; await setDoc(doc(db,'series',dateKey+'_'+serie.id),{dateKey,id:serie.id,dist:serie.dist,entries:serie.entries,createdAt:serverTimestamp()}); };
 
-// ── CHARGEMENT INITIAL + SYNC TEMPS RÉEL ─────────────────────
-if(db) {
-  // 1. Chargement complet initial (une seule fois, propre)
+// Chargement initial
+(async () => {
+  if(!db) return;
   try {
-    // Sessions + leurs participants
     const sSnap = await getDocs(collection(db,'sessions'));
-    for(const sd of sSnap.docs) {
-      const data = sd.data();
-      const sess = {id:sd.id, name:data.name, date:data.date||'', defaultDist:data.defaultDist||null, participants:[]};
-      const ppSnap = await getDocs(collection(db,'sessions',sd.id,'participants'));
+    for(const sd of sSnap.docs){
+      const data=sd.data();
+      const sess={id:sd.id,name:data.name,date:data.date||'',defaultDist:data.defaultDist||null,participants:[]};
+      const ppSnap=await getDocs(collection(db,'sessions',sd.id,'participants'));
       ppSnap.forEach(pd=>{
-        sess.participants.push({
-          id:pd.id, name:pd.data().name,
-          elapsed:pd.data().elapsed||0,
-          isRunning:false, startTime:null,
-          laps:pd.data().laps||[],
-          isSelected:false,
-          lastDist:pd.data().lastDist||null
-        });
+        sess.participants.push({id:pd.id,name:pd.data().name,elapsed:pd.data().elapsed||0,
+          isRunning:false,startTime:null,laps:pd.data().laps||[],isSelected:false,
+          lastDist:pd.data().lastDist||null,reps:[]});
       });
       window._sessions.push(sess);
     }
     window._sessions.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-
-    // Participants globaux
-    const pSnap = await getDocs(collection(db,'participants'));
-    pSnap.forEach(d=>{ window._globalP.push({id:d.id,name:d.data().name}); });
-
-    // Séries
-    const srSnap = await getDocs(collection(db,'series'));
+    const pSnap=await getDocs(collection(db,'participants'));
+    pSnap.forEach(d=>window._globalP.push({id:d.id,name:d.data().name}));
+    const srSnap=await getDocs(collection(db,'series'));
     srSnap.forEach(d=>{
       const data=d.data();
       if(!window._series[data.dateKey]) window._series[data.dateKey]=[];
       window._series[data.dateKey].push({id:data.id,dist:data.dist,entries:data.entries||[]});
     });
+    renderSessions(); renderCalendar(); renderProg();
+  } catch(e){ console.warn('Erreur Firebase',e); }
 
-    renderSessions();
-    renderCalendar();
-    renderProg();
-  } catch(e) { console.warn('Erreur chargement Firebase',e); }
-
-  // 2. Listener temps réel — uniquement pour suppressions et modifications
-  //    (les ajouts sont gérés localement pour éviter les doublons)
-  onSnapshot(collection(db,'sessions'), (snap) => {
-    snap.docChanges().forEach(change => {
-      if(change.type === 'removed') {
-        window._sessions = window._sessions.filter(s=>s.id!==change.doc.id);
+  // Sync suppressions/modifs uniquement
+  onSnapshot(collection(db,'sessions'),(snap)=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type==='removed'){
+        window._sessions=window._sessions.filter(s=>s.id!==change.doc.id);
         if(window._curNav==='sessions') renderSessions();
-      } else if(change.type === 'modified') {
-        const data = change.doc.data();
-        const existing = window._sessions.find(s=>s.id===change.doc.id);
-        if(existing) { existing.name=data.name; existing.date=data.date; }
+      } else if(change.type==='modified'){
+        const data=change.doc.data();
+        const ex=window._sessions.find(s=>s.id===change.doc.id);
+        if(ex){ex.name=data.name;ex.date=data.date;ex.defaultDist=data.defaultDist||null;}
         if(window._curNav==='sessions') renderSessions();
       }
-      // 'added' ignoré ici — géré au chargement initial et lors de createSession()
     });
   });
-}
+})();
 </script>
 
 <!-- APP LOGIC -->
@@ -676,18 +664,19 @@ window._curSess   = null;
 window._ticker    = null;
 window._pickerSel = new Set();
 window._curNav    = 'sessions';
+window._selMode   = false;
+window._selIds    = new Set();
 window._calYear   = 2026;
 window._calMonth  = 0;
 window._calSelDay = null;
 window._progDist  = null;
 window._progView  = 'seance';
-window._pendingStopParticipants = []; // participants stoppés en attente de distance
-window._deleteTargetId = null;
-window._distInclude = {}; // pid -> bool
+window._pendingStop = [];
+window._deleteTarget = null;
 
 const MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const MONTHS_SHORT=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
-const DIST_PRESETS=['25m','50m','100m','200m','400m','1km','5km','10km'];
+const DIST_PRESETS=['25m','50m','100m','200m','400m','800m','1km','5km'];
 
 // ── NAVIGATION ─────────────────────────────────────────────────
 function navigate(tab){
@@ -706,15 +695,17 @@ function goBackToSessions(){
   document.getElementById('view-sessions').classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('nav-sessions').classList.add('active');
-  window._curNav='sessions';
-  renderSessions();
+  window._curNav='sessions'; renderSessions();
 }
 
 function openSession(sid){
   const s=window._sessions.find(x=>x.id===sid); if(!s) return;
   window._curSess=s;
+  // Reset reps à chaque ouverture (reps = session courante uniquement)
+  s.participants.forEach(p=>{ if(!p.reps) p.reps=[]; });
   document.getElementById('chrono-name').textContent=s.name;
-  document.getElementById('chrono-date').textContent='📅 '+formatDate(s.date)+(s.defaultDist?' · 📏 '+s.defaultDist:'');
+  const distLabel=s.defaultDist?` · 📏 ${s.defaultDist}`:'';
+  document.getElementById('chrono-sub').textContent='📅 '+formatDate(s.date)+distLabel;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-chrono').classList.add('active');
   renderAll();
@@ -724,69 +715,99 @@ function openSession(sid){
 function todayISO(){ return new Date().toISOString().split('T')[0]; }
 function formatDate(iso){ if(!iso)return''; const[y,m,d]=iso.split('-'); return `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`; }
 
-// ── SESSIONS ───────────────────────────────────────────────────
-
-// Extrait la distance d'un nom comme "10x400m" → "400m", "5km" → "5km"
+// ── EXTRACT DISTANCE FROM NAME ─────────────────────────────────
 function extractDistFromName(name){
-  const m = name.match(/\d+x(\d+(?:\.\d+)?(?:m|km|M|KM))/i)   // 10x400m
-           || name.match(/(\d+(?:\.\d+)?(?:km|m))/i);           // 400m, 5km
-  return m ? m[1].toLowerCase() : null;
+  if(!name) return null;
+  const m=name.match(/\d+[xX×](\d+(?:\.\d+)?(?:m|km|M|KM))/i)||name.match(/(\d+(?:\.\d+)?(?:km|m))/i);
+  return m?m[1].toLowerCase():null;
 }
 
+// ── SELECTION MODE (sessions) ──────────────────────────────────
+function toggleSelMode(){
+  window._selMode=!window._selMode;
+  window._selIds=new Set();
+  const btn=document.getElementById('btn-sel-mode');
+  btn.textContent=window._selMode?'✕ Annuler':'☑ Sélectionner';
+  btn.style.background=window._selMode?'var(--red-dim)':'var(--bg3)';
+  btn.style.color=window._selMode?'var(--red)':'var(--muted)';
+  btn.style.borderColor=window._selMode?'rgba(214,40,57,0.3)':'rgba(0,0,0,0.1)';
+  document.getElementById('multi-sel-bar').classList.toggle('show',false);
+  renderSessions();
+}
+
+function toggleSessionSel(sid){
+  if(window._selIds.has(sid)) window._selIds.delete(sid);
+  else window._selIds.add(sid);
+  const bar=document.getElementById('multi-sel-bar');
+  const count=window._selIds.size;
+  bar.classList.toggle('show',count>0);
+  document.getElementById('multi-sel-count').textContent=`${count} session(s) sélectionnée(s)`;
+  renderSessions();
+}
+
+function deleteSelected(){
+  const count=window._selIds.size;
+  if(!count) return;
+  document.getElementById('confirm-delete-msg').textContent=`Supprimer ${count} session(s) ? Action irréversible.`;
+  window._deleteTarget='multi';
+  document.getElementById('confirm-delete').classList.add('open');
+}
+
+function askDeleteSession(id,name){
+  window._deleteTarget=id;
+  document.getElementById('confirm-delete-msg').textContent=`Supprimer "${name}" ? Action irréversible.`;
+  document.getElementById('confirm-delete').classList.add('open');
+}
+
+function closeConfirm(){ document.getElementById('confirm-delete').classList.remove('open'); window._deleteTarget=null; }
+
+function confirmDelete(){
+  if(window._deleteTarget==='multi'){
+    window._selIds.forEach(id=>{ window._sessions=window._sessions.filter(s=>s.id!==id); fbDeleteSession(id); });
+    showToast(`${window._selIds.size} session(s) supprimée(s)`);
+    window._selIds=new Set();
+    toggleSelMode();
+  } else {
+    const id=window._deleteTarget;
+    window._sessions=window._sessions.filter(s=>s.id!==id);
+    fbDeleteSession(id);
+    showToast('Session supprimée');
+  }
+  closeConfirm(); renderSessions();
+}
+
+// ── SESSIONS ───────────────────────────────────────────────────
 function openNewSessionModal(){
   document.getElementById('ns-name').value='';
   document.getElementById('ns-default-dist').value='';
   document.getElementById('ns-date').value=todayISO();
   document.getElementById('ns-new-p').value='';
   window._pickerSel=new Set();
-  // Presets distance
   document.getElementById('ns-dist-presets').innerHTML=
     DIST_PRESETS.map(d=>`<div class="dist-preset" onclick="nsSelectDist('${d}')">${d}</div>`).join('');
   renderPicker('ns-picker',window._globalP,window._pickerSel,toggleNsPicker);
   openModal('modal-new-session');
   setTimeout(()=>document.getElementById('ns-name').focus(),300);
 }
-
 function nsAutoDetectDist(){
-  const name=document.getElementById('ns-name').value;
-  const dist=extractDistFromName(name);
-  if(dist){
-    document.getElementById('ns-default-dist').value=dist;
-    document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>
-      el.classList.toggle('active', el.textContent===dist));
-  }
+  const dist=extractDistFromName(document.getElementById('ns-name').value);
+  if(dist){ document.getElementById('ns-default-dist').value=dist; document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>el.classList.toggle('active',el.textContent===dist)); }
 }
-
-function nsSelectDist(d){
-  document.getElementById('ns-default-dist').value=d;
-  document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>
-    el.classList.toggle('active', el.textContent===d));
-}
-function nsAddNewP(){
-  const input=document.getElementById('ns-new-p'),name=input.value.trim(); if(!name) return;
-  const id=Date.now().toString();
-  window._globalP.push({id,name}); window._pickerSel.add(id);
-  fbSaveGlobalP({id,name}); input.value='';
-  renderPicker('ns-picker',window._globalP,window._pickerSel,toggleNsPicker);
-  showToast(`${name} créé ✓`);
-}
+function nsSelectDist(d){ document.getElementById('ns-default-dist').value=d; document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>el.classList.toggle('active',el.textContent===d)); }
+function nsAddNewP(){ const input=document.getElementById('ns-new-p'),name=input.value.trim(); if(!name)return; const id=Date.now().toString(); window._globalP.push({id,name}); window._pickerSel.add(id); fbSaveGlobalP({id,name}); input.value=''; renderPicker('ns-picker',window._globalP,window._pickerSel,toggleNsPicker); showToast(`${name} créé ✓`); }
 function toggleNsPicker(id){ if(window._pickerSel.has(id)) window._pickerSel.delete(id); else window._pickerSel.add(id); renderPicker('ns-picker',window._globalP,window._pickerSel,toggleNsPicker); }
 
 function createSession(){
   const name=document.getElementById('ns-name').value.trim();
   const date=document.getElementById('ns-date').value||todayISO();
-  const defaultDist=(document.getElementById('ns-default-dist').value||'').trim()
-    || extractDistFromName(name) || null;
+  const defaultDist=(document.getElementById('ns-default-dist').value||'').trim()||extractDistFromName(name)||null;
   if(!name){ showToast('Entre un nom de session'); return; }
   const s={id:Date.now().toString(),name,date,defaultDist,participants:[]};
-  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp) s.participants.push({id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:defaultDist}); });
+  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp) s.participants.push({id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:defaultDist,reps:[]}); });
   window._sessions.unshift(s);
-  fbSaveSession(s);
-  s.participants.forEach(p=>fbSaveSessP(s.id,p));
-  closeModal('modal-new-session');
-  showToast(`"${name}" créée ✓`);
-  renderSessions();
-  openSession(s.id);
+  fbSaveSession(s); s.participants.forEach(p=>fbSaveSessP(s.id,p));
+  closeModal('modal-new-session'); showToast(`"${name}" créée ✓`);
+  renderSessions(); openSession(s.id);
 }
 
 function renderSessions(){
@@ -797,13 +818,20 @@ function renderSessions(){
   sub.textContent=ss.length===0?'Aucune session':`${ss.length} session(s)`;
   if(ss.length===0){ list.innerHTML=''; list.appendChild(empty); empty.style.display='flex'; return; }
   empty.style.display='none';
+  const selMode=window._selMode;
+  list.className='sessions-list'+(selMode?' sel-mode':'');
   list.innerHTML=ss.map(s=>`
-    <div class="session-card">
-      <div class="session-card-body" onclick="openSession('${s.id}')">
+    <div class="session-card ${selMode&&window._selIds.has(s.id)?'sel-mode-checked':''}">
+      <div class="session-sel-check" onclick="toggleSessionSel('${s.id}')">
+        <div class="sel-checkbox">
+          <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg>
+        </div>
+      </div>
+      <div class="session-card-body" onclick="${selMode?`toggleSessionSel('${s.id}')`:`openSession('${s.id}')`}">
         <div class="session-icon">🏃</div>
         <div class="session-info">
           <div class="session-name">${s.name}</div>
-          <div class="session-meta">📅 ${formatDate(s.date)}<span class="tag">👥 ${s.participants.length}</span>${s.defaultDist?`<span class="tag" style="background:var(--green-dim);color:var(--green)">📏 ${s.defaultDist}</span>`:''}</div>
+          <div class="session-meta">📅 ${formatDate(s.date)}<span class="tag">👥 ${s.participants.length}</span>${s.defaultDist?`<span class="tag green">📏 ${s.defaultDist}</span>`:''}</div>
         </div>
         <div class="session-arrow">›</div>
       </div>
@@ -811,179 +839,141 @@ function renderSessions(){
     </div>`).join('');
 }
 
-// ── SUPPRESSION SESSION ────────────────────────────────────────
-function askDeleteSession(id,name){
-  window._deleteTargetId=id;
-  document.getElementById('confirm-delete-msg').textContent=`Supprimer "${name}" ? Cette action est irréversible.`;
-  document.getElementById('confirm-delete').classList.add('open');
-}
-function closeConfirm(){ document.getElementById('confirm-delete').classList.remove('open'); window._deleteTargetId=null; }
-function confirmDelete(){
-  const id=window._deleteTargetId; if(!id) return;
-  window._sessions=window._sessions.filter(s=>s.id!==id);
-  fbDeleteSession(id);
-  closeConfirm();
-  renderSessions();
-  showToast('Session supprimée');
-}
-
 // ── ADD PARTICIPANT ─────────────────────────────────────────────
-function openAddModal(){
-  window._pickerSel=new Set();
-  const existing=new Set(window._curSess.participants.map(p=>p.id));
-  const avail=window._globalP.filter(p=>!existing.has(p.id));
-  renderPicker('ap-picker',avail,window._pickerSel,toggleApPicker);
-  document.getElementById('ap-new-name').value='';
-  openModal('modal-add-p');
-}
+function openAddModal(){ window._pickerSel=new Set(); const existing=new Set(window._curSess.participants.map(p=>p.id)); const avail=window._globalP.filter(p=>!existing.has(p.id)); renderPicker('ap-picker',avail,window._pickerSel,toggleApPicker); document.getElementById('ap-new-name').value=''; openModal('modal-add-p'); }
 function toggleApPicker(id){ if(window._pickerSel.has(id)) window._pickerSel.delete(id); else window._pickerSel.add(id); const existing=new Set(window._curSess.participants.map(p=>p.id)); const avail=window._globalP.filter(p=>!existing.has(p.id)); renderPicker('ap-picker',avail,window._pickerSel,toggleApPicker); }
 function confirmAddP(){
   let added=0;
-  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp&&!window._curSess.participants.find(p=>p.id===pid)){ const np={id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:null}; window._curSess.participants.push(np); fbSaveSessP(window._curSess.id,np); added++; } });
+  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp&&!window._curSess.participants.find(p=>p.id===pid)){ const np={id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:window._curSess.defaultDist,reps:[]}; window._curSess.participants.push(np); fbSaveSessP(window._curSess.id,np); added++; } });
   const newName=document.getElementById('ap-new-name').value.trim();
-  if(newName){ const np={id:Date.now().toString(),name:newName,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:null}; window._curSess.participants.push(np); window._globalP.push({id:np.id,name:np.name}); fbSaveGlobalP({id:np.id,name:np.name}); fbSaveSessP(window._curSess.id,np); added++; }
-  closeModal('modal-add-p'); renderAll();
-  if(added) showToast(`${added} participant(s) ajouté(s) ✓`);
+  if(newName){ const np={id:Date.now().toString(),name:newName,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:window._curSess.defaultDist,reps:[]}; window._curSess.participants.push(np); window._globalP.push({id:np.id,name:np.name}); fbSaveGlobalP({id:np.id,name:np.name}); fbSaveSessP(window._curSess.id,np); added++; }
+  closeModal('modal-add-p'); renderAll(); if(added) showToast(`${added} participant(s) ajouté(s) ✓`);
 }
-
-function renderPicker(cid,list,sel,fn){
-  const el=document.getElementById(cid);
-  if(!list.length){ el.innerHTML='<div class="picker-empty">Aucun participant disponible</div>'; return; }
-  el.innerHTML=list.map(p=>`<div class="picker-item ${sel.has(p.id)?'sel':''}" onclick="${fn.name}('${p.id}')"><div class="picker-av">${p.name[0].toUpperCase()}</div><div class="picker-nm">${p.name}</div><div class="picker-ck"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div></div>`).join('');
-}
+function renderPicker(cid,list,sel,fn){ const el=document.getElementById(cid); if(!list.length){ el.innerHTML='<div class="picker-empty">Aucun participant disponible</div>'; return; } el.innerHTML=list.map(p=>`<div class="picker-item ${sel.has(p.id)?'sel':''}" onclick="${fn.name}('${p.id}')"><div class="picker-av">${p.name[0].toUpperCase()}</div><div class="picker-nm">${p.name}</div><div class="picker-ck"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div></div>`).join(''); }
 
 // ── CHRONO ─────────────────────────────────────────────────────
 function ps(){ return window._curSess?window._curSess.participants:[]; }
 function now(){ return Date.now(); }
 function ct(p){ return p.isRunning&&p.startTime?p.elapsed+(now()-p.startTime):p.elapsed; }
-function fms(ms){ if(ms<0)ms=0; const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),c=Math.floor((ms%1000)/10); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
+function fms(ms){ if(!ms||ms<0)ms=0; const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),c=Math.floor((ms%1000)/10); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
 
 function startSelected(){
-  const t=now();let n=0;
-  ps().forEach(p=>{ if(p.isSelected&&!p.isRunning){p.isRunning=true;p.startTime=t;n++;} });
-  startTicker();renderAll();if(n)showToast(`${n} chrono(s) démarré(s) ▶`);
+  const t=now(); let n=0;
+  ps().forEach(p=>{ if(p.isSelected&&!p.isRunning){ p.isRunning=true; p.startTime=t; p.elapsed=0; n++; } });
+  startTicker(); renderAll(); if(n) showToast(`${n} chrono(s) démarré(s) ▶`);
 }
 
-// STOP direct — enregistrement immédiat sans modal
-function stopAndAskDist(){
+// STOP → ajoute directement le temps dans les répétitions
+function stopSelected(){
   const stopped=[];
   ps().forEach(p=>{ if(p.isSelected&&p.isRunning){ p.elapsed=ct(p); p.isRunning=false; p.startTime=null; stopped.push(p); } });
-  checkTicker(); renderAll();
-  if(!stopped.length) return;
+  checkTicker();
+  if(!stopped.length){ renderAll(); return; }
 
-  // Distance : lastDist > defaultDist de la session > extraite du nom
-  const dist = stopped[0].lastDist
-    || window._curSess.defaultDist
-    || extractDistFromName(window._curSess.name)
-    || null;
+  const dist=stopped[0].lastDist||window._curSess.defaultDist||extractDistFromName(window._curSess.name)||null;
 
   if(dist){
-    // Enregistrement automatique direct
-    const dateKey = window._curSess.date || todayISO();
+    // Enregistrement direct
+    const dateKey=window._curSess.date||todayISO();
     if(!window._series[dateKey]) window._series[dateKey]=[];
-    const entries = stopped.map(p=>({pid:p.id, name:p.name, timeMs:p.elapsed, include:true}));
-    const serie = {id:Date.now().toString(), dist, entries};
+    const entries=stopped.map(p=>({pid:p.id,name:p.name,timeMs:p.elapsed,include:true}));
+    const serie={id:Date.now().toString(),dist,entries};
     window._series[dateKey].push(serie);
-    fbSaveSerie(dateKey, serie);
-    stopped.forEach(p=>{ p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
+    fbSaveSerie(dateKey,serie);
+    // Ajouter dans reps locaux pour affichage
+    stopped.forEach(p=>{ if(!p.reps) p.reps=[]; p.reps.push(p.elapsed); p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
     renderProg();
-    showToast(`⏹ ${dist} enregistré — modifiable dans le Calendrier`);
+    showToast(`⏹ +1 répétition ${dist} enregistrée`);
   } else {
-    // Pas de distance connue → modal minimaliste juste pour saisir la distance
-    window._pendingStopParticipants = stopped;
-    window._distInclude = {};
-    stopped.forEach(p=>window._distInclude[p.id]=true);
-    const presets = document.getElementById('dist-presets');
-    presets.innerHTML = DIST_PRESETS.map(d=>`<div class="dist-preset" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
+    // Demande distance
+    window._pendingStop=stopped;
+    const presets=document.getElementById('dist-presets');
+    presets.innerHTML=DIST_PRESETS.map(d=>`<div class="dist-preset" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
     document.getElementById('stop-dist-input').value='';
-    document.getElementById('stop-dist-list').innerHTML='';
     openModal('modal-stop-dist');
   }
   renderAll();
 }
 
-function selectDistPreset(d){
-  document.getElementById('stop-dist-input').value=d;
-  document.querySelectorAll('.dist-preset').forEach(el=>el.classList.toggle('active',el.textContent===d));
-}
-
-function renderStopDistList(stopped){
-  const list=document.getElementById('stop-dist-list');
-  list.innerHTML=stopped.map(p=>`
-    <div class="stop-dist-item">
-      <div class="stop-dist-av">${p.name[0].toUpperCase()}</div>
-      <div class="stop-dist-name">${p.name}</div>
-      <div class="stop-dist-time">${fms(p.elapsed)}</div>
-      <button class="stop-dist-toggle ${window._distInclude[p.id]?'inc':'exc'}"
-        onclick="toggleDistInclude('${p.id}')">
-        ${window._distInclude[p.id]?'✓':'✗'}
-      </button>
-    </div>`).join('');
-}
-
-function toggleDistInclude(pid){
-  window._distInclude[pid]=!window._distInclude[pid];
-  renderStopDistList(window._pendingStopParticipants);
-}
+function selectDistPreset(d){ document.getElementById('stop-dist-input').value=d; document.querySelectorAll('#dist-presets .dist-preset').forEach(el=>el.classList.toggle('active',el.textContent===d)); }
 
 function confirmStopDist(){
   const dist=(document.getElementById('stop-dist-input').value||'').trim();
   if(!dist){ showToast('Entre une distance'); return; }
-  const stopped = window._pendingStopParticipants;
-  const dateKey = window._curSess.date || todayISO();
+  const stopped=window._pendingStop;
+  const dateKey=window._curSess.date||todayISO();
   if(!window._series[dateKey]) window._series[dateKey]=[];
-  const entries = stopped.map(p=>({pid:p.id, name:p.name, timeMs:p.elapsed, include:true}));
-  const serie = {id:Date.now().toString(), dist, entries};
+  const entries=stopped.map(p=>({pid:p.id,name:p.name,timeMs:p.elapsed,include:true}));
+  const serie={id:Date.now().toString(),dist,entries};
   window._series[dateKey].push(serie);
-  fbSaveSerie(dateKey, serie);
-  stopped.forEach(p=>{ p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
+  fbSaveSerie(dateKey,serie);
+  stopped.forEach(p=>{ if(!p.reps) p.reps=[]; p.reps.push(p.elapsed); p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
   closeModal('modal-stop-dist');
-  finalizeStop();
-  renderProg();
-  showToast(`⏹ ${dist} enregistré ✓`);
+  renderAll(); renderProg();
+  showToast(`⏹ +1 répétition ${dist} enregistrée`);
 }
 
-function finalizeStop(){
-  window._pendingStopParticipants.forEach(p=>fbSaveSessP(window._curSess.id,p));
-  window._pendingStopParticipants=[];
-  renderAll();
+function resetAll(){
+  ps().forEach(p=>{ p.elapsed=0; p.isRunning=false; p.startTime=null; p.laps=[]; p.reps=[]; fbSaveSessP(window._curSess.id,p); });
+  stopTicker(); renderAll(); showToast('Tout réinitialisé ↺');
 }
-
-function lapAll(){ let n=0; ps().forEach(p=>{ if(p.isRunning){ const tot=ct(p),prev=p.laps.length?p.laps[p.laps.length-1].total:0; p.laps.push({lap:tot-prev,total:tot}); fbSaveSessP(window._curSess.id,p); n++; } }); renderAll(); if(n) showToast(`Lap pour ${n} participant(s) 🚩`); }
-function lapOne(id){ const p=ps().find(p=>p.id===id);if(!p||!p.isRunning)return; const tot=ct(p),prev=p.laps.length?p.laps[p.laps.length-1].total:0; p.laps.push({lap:tot-prev,total:tot}); fbSaveSessP(window._curSess.id,p); renderAll(); showToast(`Lap — ${p.name} 🚩`); }
-function resetOne(id){ const p=ps().find(p=>p.id===id);if(!p)return; p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[]; fbSaveSessP(window._curSess.id,p); checkTicker(); renderAll(); }
-function resetAll(){ ps().forEach(p=>{p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[]; fbSaveSessP(window._curSess.id,p);}); stopTicker();renderAll();showToast('Tout réinitialisé ↺'); }
-function toggleSelect(id){ const p=ps().find(p=>p.id===id);if(p){p.isSelected=!p.isSelected;renderAll();} }
-function selectAll(){ ps().forEach(p=>p.isSelected=true);renderAll(); }
-function deselectAll(){ ps().forEach(p=>p.isSelected=false);renderAll(); }
+function resetOne(id){ const p=ps().find(p=>p.id===id); if(!p)return; p.elapsed=0; p.isRunning=false; p.startTime=null; p.laps=[]; p.reps=[]; fbSaveSessP(window._curSess.id,p); checkTicker(); renderAll(); }
+function toggleSelect(id){ const p=ps().find(p=>p.id===id); if(p){p.isSelected=!p.isSelected;renderAll();} }
+function selectAll(){ ps().forEach(p=>p.isSelected=true); renderAll(); }
+function deselectAll(){ ps().forEach(p=>p.isSelected=false); renderAll(); }
 
 function startTicker(){ if(window._ticker)return; window._ticker=setInterval(()=>{ document.querySelectorAll('.p-card.running .p-time').forEach(el=>{const id=el.closest('.p-card').dataset.id;const p=ps().find(p=>p.id===id);if(p)el.textContent=fms(ct(p));});},33); }
-function stopTicker(){ clearInterval(window._ticker);window._ticker=null; }
+function stopTicker(){ clearInterval(window._ticker); window._ticker=null; }
 function checkTicker(){ if(!ps().some(p=>p.isRunning)) stopTicker(); }
 
 function renderAll(){
   const list=document.getElementById('participants-list');
-  const all=ps(),sel=all.filter(p=>p.isSelected).length,run=all.filter(p=>p.isRunning).length;
+  const all=ps(), sel=all.filter(p=>p.isSelected).length, run=all.filter(p=>p.isRunning).length;
   document.getElementById('sel-count').textContent=`${sel}/${all.length} sélectionné(s)`;
   document.getElementById('btn-start').disabled=!(sel>0&&all.some(p=>p.isSelected&&!p.isRunning));
   document.getElementById('btn-stop').disabled =!(sel>0&&all.some(p=>p.isSelected&&p.isRunning));
-  document.getElementById('btn-lap').disabled  =run===0;
   if(!all.length){ list.innerHTML=`<div class="empty-state" style="padding:40px 20px"><div class="ei">👥</div><div class="ep">Appuie sur + pour ajouter des participants</div></div>`; return; }
   list.innerHTML=all.map(p=>{
-    const t=fms(ct(p)),ini=p.name[0].toUpperCase(),hl=p.laps.length>0,sa=p.isRunning||p.elapsed>0;
-    let cl='p-card';if(p.isSelected)cl+=' selected';if(p.isRunning)cl+=' running';if(sa)cl+=' show-actions';if(hl)cl+=' has-laps';
-    const distBadge=p.lastDist&&!p.isRunning?`<span class="p-dist-badge">📏 ${p.lastDist}</span>`:'';
-    const status=p.isRunning?`<div class="p-status"><div class="dot"></div> En cours</div>`:`<div class="p-status">En attente${distBadge}</div>`;
-    const laps=hl?p.laps.map((l,i)=>`<div class="lap-row"><span class="lap-num">Lap ${i+1}</span><span class="lap-time">${fms(l.lap)}</span><span class="lap-total">Total ${fms(l.total)}</span></div>`).join(''):'';
+    const t=fms(ct(p));
+    const reps=p.reps||[];
+    const hasReps=reps.length>0;
+    const avg=hasReps?Math.round(reps.reduce((s,v)=>s+v,0)/reps.length):null;
+    let cl='p-card';
+    if(p.isSelected) cl+=' selected';
+    if(p.isRunning)  cl+=' running';
+    if(p.isRunning||p.elapsed>0) cl+=' show-actions';
+    if(hasReps) cl+=' has-reps';
+
+    const repBadge=hasReps?`<span class="rep-badge">${reps.length} rép.</span>`:'';
+    const distBadge=p.lastDist&&!p.isRunning?`<span style="font-size:10px;color:var(--muted)">📏 ${p.lastDist}</span>`:'';
+    const status=p.isRunning
+      ?`<div class="p-status"><div class="dot"></div> En cours</div>`
+      :`<div class="p-status">${repBadge}${distBadge}</div>`;
+
+    const repsHtml=hasReps?`
+      <div class="p-reps">
+        <div class="reps-title">
+          <span>Répétitions</span>
+          ${avg!==null?`<span class="rep-avg">Moy: ${fms(avg)}</span>`:''}
+        </div>
+        <div class="reps-grid">
+          ${reps.map((r,i)=>`<div class="rep-chip">#${i+1} ${fms(r)}</div>`).join('')}
+        </div>
+      </div>`:'';
+
+    const actionsHtml=(p.isRunning||p.elapsed>0)?`
+      <div class="p-actions">
+        <button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button>
+      </div>`:'';
+
     return `<div class="${cl}" data-id="${p.id}" onclick="toggleSelect('${p.id}')">
       <div class="p-card-main">
         <div class="p-checkbox"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
-        <div class="p-avatar">${ini}</div>
+        <div class="p-avatar">${p.name[0].toUpperCase()}</div>
         <div class="p-info"><div class="p-name">${p.name}</div>${status}</div>
         <div class="p-time">${t}</div>
       </div>
-      ${sa?`<div class="p-actions">${p.isRunning?`<button class="p-action-btn lap" onclick="event.stopPropagation();lapOne('${p.id}')">🚩 Lap</button>`:'<span></span>'}<button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button></div>`:''}
-      ${hl?`<div class="p-laps">${laps}</div>`:''}
+      ${repsHtml}${actionsHtml}
     </div>`;
   }).join('');
   if(!window._ticker&&all.some(p=>p.isRunning)) startTicker();
@@ -1000,16 +990,14 @@ function renderCalendar(){
   const dows=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
   const firstDay=new Date(y,m,1).getDay();
-  const startOffset=(firstDay===0)?6:firstDay-1;
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const todayISO2=todayISO();
-  for(let i=0;i<startOffset;i++) html+=`<div class="cal-day empty"></div>`;
-  for(let d=1;d<=daysInMonth;d++){
+  const offset=(firstDay===0)?6:firstDay-1;
+  const days=new Date(y,m+1,0).getDate();
+  const today=todayISO();
+  for(let i=0;i<offset;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
     const iso=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hasSeries=window._series[iso]&&window._series[iso].length>0;
-    const isToday=iso===todayISO2;
-    const isSel=iso===window._calSelDay;
-    let cl='cal-day';if(isToday)cl+=' today';if(isSel)cl+=' selected';if(hasSeries)cl+=' has-series';
+    let cl='cal-day'; if(iso===today)cl+=' today'; if(iso===window._calSelDay)cl+=' selected';
     html+=`<div class="${cl}" onclick="calSelectDay('${iso}')"><span class="dn">${d}</span>${hasSeries?`<div class="cal-dot"></div>`:''}</div>`;
   }
   grid.innerHTML=html;
@@ -1023,21 +1011,21 @@ function renderDayDetail(iso){
   const series=window._series[iso]||[];
   const[y,m,d]=iso.split('-');
   document.getElementById('cal-day-title').textContent=`${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;
-  document.getElementById('cal-day-date-label').textContent=`${series.length} série(s)`;
+  document.getElementById('cal-day-sub').textContent=`${series.length} série(s)`;
   detail.classList.add('show');
   const list=document.getElementById('series-list');
-  if(!series.length){ list.innerHTML=`<div style="padding:16px 0;text-align:center;font-size:13px;color:var(--muted)">Aucune série — ajoute-en une</div>`; return; }
+  if(!series.length){ list.innerHTML=`<div style="padding:16px 0;text-align:center;font-size:13px;color:var(--muted)">Aucune série ce jour</div>`; return; }
   list.innerHTML=series.map((serie,si)=>{
     const included=serie.entries.filter(e=>e.include);
     const avg=included.length?Math.round(included.reduce((s,e)=>s+e.timeMs,0)/included.length):null;
     const rows=serie.entries.map((e,ei)=>`
       <div class="serie-row">
-        <div class="serie-row-avatar">${e.name[0].toUpperCase()}</div>
+        <div class="serie-row-av">${e.name[0].toUpperCase()}</div>
         <div class="serie-row-name">${e.name}</div>
         <div class="serie-row-time">${fms(e.timeMs)}</div>
-        <button class="serie-row-toggle ${e.include?'include':'exclude'}" onclick="toggleSerieEntry('${iso}',${si},${ei})">${e.include?'✓':'✗'}</button>
+        <button class="serie-row-toggle ${e.include?'inc':'exc'}" onclick="toggleSerieEntry('${iso}',${si},${ei})">${e.include?'✓':'✗'}</button>
       </div>`).join('');
-    return `<div class="serie-card"><div class="serie-header"><div class="serie-dist">📏 ${serie.dist}</div>${avg!==null?`<div class="serie-avg">Moy: ${fms(avg)}</div>`:'<div></div>'}</div><div class="serie-rows">${rows}</div></div>`;
+    return `<div class="serie-card"><div class="serie-header"><div class="serie-dist">📏 ${serie.dist}</div>${avg!==null?`<div class="serie-avg">Moy: ${fms(avg)}</div>`:''}</div><div class="serie-rows">${rows}</div></div>`;
   }).join('');
 }
 
@@ -1047,20 +1035,18 @@ function toggleSerieEntry(iso,si,ei){
   renderDayDetail(iso); renderProg();
 }
 
-// ── AJOUT SÉRIE (Calendrier) ───────────────────────────────────
 function openAddSerieModal(){
   if(!window._calSelDay){ showToast('Sélectionne un jour'); return; }
   document.getElementById('serie-dist').value='';
-  const allP=window._globalP;
   const inputs=document.getElementById('serie-p-inputs');
-  inputs.innerHTML=!allP.length
+  inputs.innerHTML=!window._globalP.length
     ?`<div style="font-size:13px;color:var(--muted);padding:8px 0">Aucun participant — crée-en dans Sessions</div>`
-    :allP.map(p=>`<div class="serie-p-row"><div class="serie-p-av">${p.name[0].toUpperCase()}</div><div class="serie-p-name">${p.name}</div><input class="serie-p-input" id="sp-${p.id}" type="text" placeholder="MM:SS.cc" data-pid="${p.id}" data-pname="${p.name}"></div>`).join('');
+    :window._globalP.map(p=>`<div class="serie-p-row"><div class="serie-p-av">${p.name[0].toUpperCase()}</div><div class="serie-p-name">${p.name}</div><input class="serie-p-input" id="sp-${p.id}" type="text" placeholder="MM:SS.cc" data-pid="${p.id}" data-pname="${p.name}"></div>`).join('');
   openModal('modal-new-serie');
   setTimeout(()=>document.getElementById('serie-dist').focus(),300);
 }
 
-function parseTimeInput(str){
+function parseTime(str){
   str=(str||'').trim().replace(',','.');
   if(!str) return null;
   let ms=0;
@@ -1074,7 +1060,7 @@ function saveSerie(){
   const dist=document.getElementById('serie-dist').value.trim();
   if(!dist){ showToast('Entre une distance'); return; }
   const entries=[];
-  document.querySelectorAll('.serie-p-input').forEach(input=>{ const ms=parseTimeInput(input.value); if(ms!==null) entries.push({pid:input.dataset.pid,name:input.dataset.pname,timeMs:ms,include:true}); });
+  document.querySelectorAll('.serie-p-input').forEach(input=>{ const ms=parseTime(input.value); if(ms!==null) entries.push({pid:input.dataset.pid,name:input.dataset.pname,timeMs:ms,include:true}); });
   if(!entries.length){ showToast('Entre au moins un temps'); return; }
   const iso=window._calSelDay;
   if(!window._series[iso]) window._series[iso]=[];
@@ -1090,22 +1076,23 @@ function saveSerie(){
 function getAllDists(){ const d=new Set(); Object.values(window._series).forEach(day=>day.forEach(s=>d.add(s.dist))); return[...d].sort(); }
 function setProgView(v){ window._progView=v; document.getElementById('toggle-seance').classList.toggle('active',v==='seance'); document.getElementById('toggle-mois').classList.toggle('active',v==='mois'); renderProg(); }
 function setProgDist(d){ window._progDist=(d==='Toutes')?null:d; renderProg(); }
-function toggleProgCard(id){ document.getElementById(id).classList.toggle('open'); }
+function toggleProgCard(id){ document.getElementById(id)&&document.getElementById(id).classList.toggle('open'); }
 
 function renderProg(){
   const dists=getAllDists();
-  const filtersEl=document.getElementById('prog-dist-filters');
+  const fe=document.getElementById('prog-dist-filters');
   if(!window._progDist&&dists.length) window._progDist=dists[0];
-  filtersEl.innerHTML=['Toutes',...dists].map(d=>`<div class="filter-chip ${(window._progDist===d||(d==='Toutes'&&!window._progDist))?'active':''}" onclick="setProgDist('${d}')">${d}</div>`).join('');
+  fe.innerHTML=['Toutes',...dists].map(d=>`<div class="filter-chip ${(window._progDist===d||(d==='Toutes'&&!window._progDist))?'active':''}" onclick="setProgDist('${d}')">${d}</div>`).join('');
   const content=document.getElementById('prog-content');
-  if(!dists.length){ content.innerHTML=`<div class="empty-state"><div class="ei">📈</div><div class="ep">Aucune donnée</div><div class="es">Ajoute des séries dans Sessions ou le Calendrier</div></div>`; return; }
+  if(!dists.length){ content.innerHTML=`<div class="empty-state"><div class="ei">📈</div><div class="ep">Aucune donnée</div><div class="es">Lance des sessions et appuie sur STOP pour enregistrer</div></div>`; return; }
   const byPerson={};
   Object.entries(window._series).forEach(([dateKey,daySeries])=>{
     daySeries.forEach(serie=>{
       if(window._progDist&&window._progDist!=='Toutes'&&serie.dist!==window._progDist) return;
       serie.entries.filter(e=>e.include).forEach(e=>{
-        if(!byPerson[e.pid||e.name]) byPerson[e.pid||e.name]={name:e.name,data:[]};
-        byPerson[e.pid||e.name].data.push({date:dateKey,dist:serie.dist,timeMs:e.timeMs});
+        const k=e.pid||e.name;
+        if(!byPerson[k]) byPerson[k]={name:e.name,data:[]};
+        byPerson[k].data.push({date:dateKey,dist:serie.dist,timeMs:e.timeMs});
       });
     });
   });
@@ -1116,21 +1103,21 @@ function renderProg(){
     const distSections=Object.entries(distMap).map(([dist,entries])=>{
       let grouped={};
       if(window._progView==='seance'){ entries.forEach(e=>{ if(!grouped[e.date]) grouped[e.date]=[]; grouped[e.date].push(e.timeMs); }); }
-      else { entries.forEach(e=>{ const key=e.date.substring(0,7); if(!grouped[key]) grouped[key]=[]; grouped[key].push(e.timeMs); }); }
+      else { entries.forEach(e=>{ const k=e.date.substring(0,7); if(!grouped[k]) grouped[k]=[]; grouped[k].push(e.timeMs); }); }
       const rows=Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0]));
       let prevAvg=null;
       const tableRows=rows.map(([period,times])=>{
         const avg=Math.round(times.reduce((s,t)=>s+t,0)/times.length);
         let delta='';
-        if(prevAvg!==null){ const diff=avg-prevAvg; delta=`<span class="prog-delta ${diff<0?'better':diff>0?'worse':'same'}">${diff<0?'':'+'} ${fms(Math.abs(diff))}</span>`; }
+        if(prevAvg!==null){ const diff=avg-prevAvg; delta=`<span class="prog-delta ${diff<0?'better':'worse'}">${diff<0?'▼':'▲'} ${fms(Math.abs(diff))}</span>`; }
         prevAvg=avg;
         const label=window._progView==='seance'?formatDate(period):MONTHS_SHORT[parseInt(period.split('-')[1])-1]+' '+period.split('-')[0];
-        return `<tr><td>${label}</td><td class="mono">${fms(avg)}</td><td>${times.length}</td><td>${delta}</td></tr>`;
+        return `<tr><td>${label}</td><td class="mono">${fms(avg)}</td><td>${times.length} rép.</td><td>${delta}</td></tr>`;
       }).join('');
-      return `<div class="prog-dist-section"><div class="prog-dist-label">📏 ${dist}</div><table class="prog-table"><thead><tr><th>Période</th><th>Moyenne</th><th>Essais</th><th>Évolution</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+      return `<div class="prog-dist-sec"><div class="prog-dist-lbl">📏 ${dist}</div><table class="prog-table"><thead><tr><th>Période</th><th>Moyenne</th><th>Rép.</th><th>Évol.</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
     }).join('');
-    const cardId='pc-'+person.name.replace(/\s/g,'_');
-    return `<div class="prog-card" id="${cardId}"><div class="prog-card-header" onclick="toggleProgCard('${cardId}')"><div class="prog-avatar">${person.name[0].toUpperCase()}</div><div class="prog-name">${person.name}</div><div class="prog-toggle">›</div></div><div class="prog-body">${distSections}</div></div>`;
+    const cid='pc-'+person.name.replace(/\s/g,'_');
+    return `<div class="prog-card" id="${cid}"><div class="prog-card-hdr" onclick="toggleProgCard('${cid}')"><div class="prog-av">${person.name[0].toUpperCase()}</div><div class="prog-name">${person.name}</div><div class="prog-toggle">›</div></div><div class="prog-body">${distSections}</div></div>`;
   }).join('');
   const first=content.querySelector('.prog-card'); if(first) first.classList.add('open');
 }
@@ -1139,8 +1126,8 @@ function renderProg(){
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(o=>{ o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }); });
-document.getElementById('ns-name').addEventListener('keydown',e=>{ if(e.key==='Enter') createSession(); });
 document.getElementById('confirm-delete').addEventListener('click',e=>{ if(e.target===document.getElementById('confirm-delete')) closeConfirm(); });
+document.getElementById('ns-name').addEventListener('keydown',e=>{ if(e.key==='Enter') createSession(); });
 
 // ── TOAST ──────────────────────────────────────────────────────
 let _tt=null;
