@@ -523,18 +523,14 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   </div>
 </div>
 
-<!-- MODAL : DISTANCE APRÈS STOP -->
+<!-- MODAL : DISTANCE (seulement si pas de distance connue) -->
 <div class="modal-overlay" id="modal-stop-dist">
   <div class="modal">
-    <h3>Enregistrer la distance</h3>
+    <h3>Quelle distance ?</h3>
     <div class="modal-section">
-      <label class="modal-label">Distance de la série</label>
-      <div class="dist-presets" id="dist-presets"></div>
-      <input class="modal-input" id="stop-dist-input" type="text" placeholder="Ex: 50m, 100m, 400m...">
-    </div>
-    <div class="modal-section">
-      <label class="modal-label">Compter dans la moyenne ?</label>
-      <div class="stop-dist-list" id="stop-dist-list"></div>
+      <div class="dist-presets" id="dist-presets" style="margin-bottom:10px"></div>
+      <input class="modal-input" id="stop-dist-input" type="text" placeholder="Ex: 50m, 400m, 1km...">
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">💡 Tous les temps seront inclus dans la moyenne. Tu peux modifier ça dans le Calendrier.</div>
     </div>
     <div class="modal-btns">
       <button class="modal-btn cancel" onclick="closeModal('modal-stop-dist');finalizeStop()">Ignorer</button>
@@ -868,29 +864,42 @@ function startSelected(){
   startTicker();renderAll();if(n)showToast(`${n} chrono(s) démarré(s) ▶`);
 }
 
-// STOP avec demande de distance
+// STOP direct — enregistrement immédiat sans modal
 function stopAndAskDist(){
   const stopped=[];
   ps().forEach(p=>{ if(p.isSelected&&p.isRunning){ p.elapsed=ct(p); p.isRunning=false; p.startTime=null; stopped.push(p); } });
   checkTicker(); renderAll();
   if(!stopped.length) return;
-  window._pendingStopParticipants=stopped;
 
-  // Distance pré-remplie : lastDist du participant > defaultDist de la session > vide
-  const prefill = stopped[0].lastDist
+  // Distance : lastDist > defaultDist de la session > extraite du nom
+  const dist = stopped[0].lastDist
     || window._curSess.defaultDist
     || extractDistFromName(window._curSess.name)
-    || '';
+    || null;
 
-  const presets=document.getElementById('dist-presets');
-  presets.innerHTML=DIST_PRESETS.map(d=>`<div class="dist-preset ${d===prefill?'active':''}" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
-
-  document.getElementById('stop-dist-input').value=prefill;
-
-  window._distInclude={};
-  stopped.forEach(p=>window._distInclude[p.id]=true);
-  renderStopDistList(stopped);
-  openModal('modal-stop-dist');
+  if(dist){
+    // Enregistrement automatique direct
+    const dateKey = window._curSess.date || todayISO();
+    if(!window._series[dateKey]) window._series[dateKey]=[];
+    const entries = stopped.map(p=>({pid:p.id, name:p.name, timeMs:p.elapsed, include:true}));
+    const serie = {id:Date.now().toString(), dist, entries};
+    window._series[dateKey].push(serie);
+    fbSaveSerie(dateKey, serie);
+    stopped.forEach(p=>{ p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
+    renderProg();
+    showToast(`⏹ ${dist} enregistré — modifiable dans le Calendrier`);
+  } else {
+    // Pas de distance connue → modal minimaliste juste pour saisir la distance
+    window._pendingStopParticipants = stopped;
+    window._distInclude = {};
+    stopped.forEach(p=>window._distInclude[p.id]=true);
+    const presets = document.getElementById('dist-presets');
+    presets.innerHTML = DIST_PRESETS.map(d=>`<div class="dist-preset" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
+    document.getElementById('stop-dist-input').value='';
+    document.getElementById('stop-dist-list').innerHTML='';
+    openModal('modal-stop-dist');
+  }
+  renderAll();
 }
 
 function selectDistPreset(d){
@@ -920,28 +929,18 @@ function toggleDistInclude(pid){
 function confirmStopDist(){
   const dist=(document.getElementById('stop-dist-input').value||'').trim();
   if(!dist){ showToast('Entre une distance'); return; }
-  const dateKey=window._curSess.date||todayISO();
+  const stopped = window._pendingStopParticipants;
+  const dateKey = window._curSess.date || todayISO();
   if(!window._series[dateKey]) window._series[dateKey]=[];
-
-  const entries=window._pendingStopParticipants.map(p=>({
-    pid:p.id, name:p.name, timeMs:p.elapsed, include:!!window._distInclude[p.id]
-  }));
-
-  const serie={id:Date.now().toString(), dist, entries};
+  const entries = stopped.map(p=>({pid:p.id, name:p.name, timeMs:p.elapsed, include:true}));
+  const serie = {id:Date.now().toString(), dist, entries};
   window._series[dateKey].push(serie);
   fbSaveSerie(dateKey, serie);
-
-  // Mémoriser la dernière distance utilisée par participant
-  window._pendingStopParticipants.forEach(p=>{
-    p.lastDist=dist;
-    fbSaveSessP(window._curSess.id,p);
-  });
-
+  stopped.forEach(p=>{ p.lastDist=dist; fbSaveSessP(window._curSess.id,p); });
   closeModal('modal-stop-dist');
   finalizeStop();
-  renderAll();
   renderProg();
-  showToast(`Série ${dist} enregistrée ✓`);
+  showToast(`⏹ ${dist} enregistré ✓`);
 }
 
 function finalizeStop(){
