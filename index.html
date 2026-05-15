@@ -478,7 +478,12 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
     <h3>Nouvelle session</h3>
     <div class="modal-section">
       <label class="modal-label">Nom</label>
-      <input class="modal-input" id="ns-name" type="text" placeholder="Ex : Entraînement lundi matin">
+      <input class="modal-input" id="ns-name" type="text" placeholder="Ex : 10x400m, Endurance 5km..." oninput="nsAutoDetectDist()">
+    </div>
+    <div class="modal-section">
+      <label class="modal-label">Distance par défaut <span style="color:var(--muted);font-weight:400;text-transform:none">(pré-remplie au STOP)</span></label>
+      <div class="dist-presets" id="ns-dist-presets" style="margin-bottom:8px"></div>
+      <input class="modal-input" id="ns-default-dist" type="text" placeholder="Ex : 400m, 50m, 1km... (optionnel)">
     </div>
     <div class="modal-section">
       <label class="modal-label">Date</label>
@@ -600,7 +605,7 @@ try {
 window._db = db;
 
 // FB helpers
-window.fbSaveSession  = async (s) => { if(!db)return; await setDoc(doc(db,'sessions',s.id),{name:s.name,date:s.date,createdAt:serverTimestamp()},{merge:true}); };
+window.fbSaveSession  = async (s) => { if(!db)return; await setDoc(doc(db,'sessions',s.id),{name:s.name,date:s.date,defaultDist:s.defaultDist||null,createdAt:serverTimestamp()},{merge:true}); };
 window.fbDeleteSession= async (id)=> { if(!db)return; await deleteDoc(doc(db,'sessions',id)); };
 window.fbSaveGlobalP  = async (p) => { if(!db)return; await setDoc(doc(db,'participants',p.id),{name:p.name},{merge:true}); };
 window.fbSaveSessP    = async (sid,p) => { if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,elapsed:p.elapsed,isRunning:false,startTime:null,laps:p.laps},{merge:true}); };
@@ -614,7 +619,7 @@ if(db) {
     const sSnap = await getDocs(collection(db,'sessions'));
     for(const sd of sSnap.docs) {
       const data = sd.data();
-      const sess = {id:sd.id, name:data.name, date:data.date||'', participants:[]};
+      const sess = {id:sd.id, name:data.name, date:data.date||'', defaultDist:data.defaultDist||null, participants:[]};
       const ppSnap = await getDocs(collection(db,'sessions',sd.id,'participants'));
       ppSnap.forEach(pd=>{
         sess.participants.push({
@@ -713,7 +718,7 @@ function openSession(sid){
   const s=window._sessions.find(x=>x.id===sid); if(!s) return;
   window._curSess=s;
   document.getElementById('chrono-name').textContent=s.name;
-  document.getElementById('chrono-date').textContent='📅 '+formatDate(s.date);
+  document.getElementById('chrono-date').textContent='📅 '+formatDate(s.date)+(s.defaultDist?' · 📏 '+s.defaultDist:'');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-chrono').classList.add('active');
   renderAll();
@@ -724,14 +729,42 @@ function todayISO(){ return new Date().toISOString().split('T')[0]; }
 function formatDate(iso){ if(!iso)return''; const[y,m,d]=iso.split('-'); return `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`; }
 
 // ── SESSIONS ───────────────────────────────────────────────────
+
+// Extrait la distance d'un nom comme "10x400m" → "400m", "5km" → "5km"
+function extractDistFromName(name){
+  const m = name.match(/\d+x(\d+(?:\.\d+)?(?:m|km|M|KM))/i)   // 10x400m
+           || name.match(/(\d+(?:\.\d+)?(?:km|m))/i);           // 400m, 5km
+  return m ? m[1].toLowerCase() : null;
+}
+
 function openNewSessionModal(){
   document.getElementById('ns-name').value='';
+  document.getElementById('ns-default-dist').value='';
   document.getElementById('ns-date').value=todayISO();
   document.getElementById('ns-new-p').value='';
   window._pickerSel=new Set();
+  // Presets distance
+  document.getElementById('ns-dist-presets').innerHTML=
+    DIST_PRESETS.map(d=>`<div class="dist-preset" onclick="nsSelectDist('${d}')">${d}</div>`).join('');
   renderPicker('ns-picker',window._globalP,window._pickerSel,toggleNsPicker);
   openModal('modal-new-session');
   setTimeout(()=>document.getElementById('ns-name').focus(),300);
+}
+
+function nsAutoDetectDist(){
+  const name=document.getElementById('ns-name').value;
+  const dist=extractDistFromName(name);
+  if(dist){
+    document.getElementById('ns-default-dist').value=dist;
+    document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>
+      el.classList.toggle('active', el.textContent===dist));
+  }
+}
+
+function nsSelectDist(d){
+  document.getElementById('ns-default-dist').value=d;
+  document.querySelectorAll('#ns-dist-presets .dist-preset').forEach(el=>
+    el.classList.toggle('active', el.textContent===d));
 }
 function nsAddNewP(){
   const input=document.getElementById('ns-new-p'),name=input.value.trim(); if(!name) return;
@@ -746,9 +779,11 @@ function toggleNsPicker(id){ if(window._pickerSel.has(id)) window._pickerSel.del
 function createSession(){
   const name=document.getElementById('ns-name').value.trim();
   const date=document.getElementById('ns-date').value||todayISO();
+  const defaultDist=(document.getElementById('ns-default-dist').value||'').trim()
+    || extractDistFromName(name) || null;
   if(!name){ showToast('Entre un nom de session'); return; }
-  const s={id:Date.now().toString(),name,date,participants:[]};
-  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp) s.participants.push({id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:null}); });
+  const s={id:Date.now().toString(),name,date,defaultDist,participants:[]};
+  window._pickerSel.forEach(pid=>{ const gp=window._globalP.find(p=>p.id===pid); if(gp) s.participants.push({id:gp.id,name:gp.name,elapsed:0,isRunning:false,startTime:null,laps:[],isSelected:false,lastDist:defaultDist}); });
   window._sessions.unshift(s);
   fbSaveSession(s);
   s.participants.forEach(p=>fbSaveSessP(s.id,p));
@@ -772,7 +807,7 @@ function renderSessions(){
         <div class="session-icon">🏃</div>
         <div class="session-info">
           <div class="session-name">${s.name}</div>
-          <div class="session-meta">📅 ${formatDate(s.date)}<span class="tag">👥 ${s.participants.length}</span></div>
+          <div class="session-meta">📅 ${formatDate(s.date)}<span class="tag">👥 ${s.participants.length}</span>${s.defaultDist?`<span class="tag" style="background:var(--green-dim);color:var(--green)">📏 ${s.defaultDist}</span>`:''}</div>
         </div>
         <div class="session-arrow">›</div>
       </div>
@@ -841,17 +876,19 @@ function stopAndAskDist(){
   if(!stopped.length) return;
   window._pendingStopParticipants=stopped;
 
-  // Préparer la modal distance
+  // Distance pré-remplie : lastDist du participant > defaultDist de la session > vide
+  const prefill = stopped[0].lastDist
+    || window._curSess.defaultDist
+    || extractDistFromName(window._curSess.name)
+    || '';
+
   const presets=document.getElementById('dist-presets');
-  presets.innerHTML=DIST_PRESETS.map(d=>`<div class="dist-preset ${d===(stopped[0].lastDist||'')?'active':''}" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
+  presets.innerHTML=DIST_PRESETS.map(d=>`<div class="dist-preset ${d===prefill?'active':''}" onclick="selectDistPreset('${d}')">${d}</div>`).join('');
 
-  const lastDist=stopped[0].lastDist||'';
-  document.getElementById('stop-dist-input').value=lastDist;
+  document.getElementById('stop-dist-input').value=prefill;
 
-  // init include map
   window._distInclude={};
   stopped.forEach(p=>window._distInclude[p.id]=true);
-
   renderStopDistList(stopped);
   openModal('modal-stop-dist');
 }
