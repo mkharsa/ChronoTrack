@@ -414,6 +414,17 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 
 <!-- VUE CALENDRIER -->
 <div class="view" id="view-calendar">
+  <div class="view-header">
+    <div>
+      <div class="view-title">Calendrier</div>
+      <div class="view-subtitle">Saisis des temps manuellement par jour</div>
+    </div>
+  </div>
+  <div style="margin:0 16px 10px;padding:10px 14px;background:var(--blue-dim);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--blue);line-height:1.6">
+    📌 Sélectionne un jour pour voir ou ajouter des séries.<br>
+    Une <strong>série</strong> = une distance + les temps de chaque participant.<br>
+    Tu peux choisir quels temps comptent dans la <strong>moyenne de progression</strong>.
+  </div>
   <div class="cal-nav">
     <button class="cal-arrow" onclick="calPrev()">‹</button>
     <div class="cal-month-label" id="cal-month-label">—</div>
@@ -595,47 +606,63 @@ window.fbSaveGlobalP  = async (p) => { if(!db)return; await setDoc(doc(db,'parti
 window.fbSaveSessP    = async (sid,p) => { if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,elapsed:p.elapsed,isRunning:false,startTime:null,laps:p.laps},{merge:true}); };
 window.fbSaveSerie    = async (dateKey,serie) => { if(!db)return; await setDoc(doc(db,'series',dateKey+'_'+serie.id),{dateKey,id:serie.id,dist:serie.dist,entries:serie.entries,createdAt:serverTimestamp()}); };
 
-// ── REALTIME SYNC SESSIONS ────────────────────────────────────
+// ── CHARGEMENT INITIAL + SYNC TEMPS RÉEL ─────────────────────
 if(db) {
-  const { onSnapshot, collection } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-  onSnapshot(collection(db,'sessions'), async (snap) => {
-    for(const change of snap.docChanges()) {
-      const sd = change.doc;
+  // 1. Chargement complet initial (une seule fois, propre)
+  try {
+    // Sessions + leurs participants
+    const sSnap = await getDocs(collection(db,'sessions'));
+    for(const sd of sSnap.docs) {
       const data = sd.data();
-      if(change.type === 'removed') {
-        window._sessions = window._sessions.filter(s=>s.id!==sd.id);
-      } else if(change.type === 'added') {
-        if(!window._sessions.find(s=>s.id===sd.id)) {
-          const sess={id:sd.id,name:data.name,date:data.date,participants:[]};
-          const ppSnap = await getDocs(collection(db,'sessions',sd.id,'participants'));
-          ppSnap.forEach(pd=>{
-            sess.participants.push({id:pd.id,name:pd.data().name,elapsed:pd.data().elapsed||0,
-              isRunning:false,startTime:null,laps:pd.data().laps||[],isSelected:false,lastDist:pd.data().lastDist||null});
-          });
-          window._sessions.push(sess);
-        }
-      } else if(change.type === 'modified') {
-        const existing = window._sessions.find(s=>s.id===sd.id);
-        if(existing) { existing.name=data.name; existing.date=data.date; }
-      }
+      const sess = {id:sd.id, name:data.name, date:data.date||'', participants:[]};
+      const ppSnap = await getDocs(collection(db,'sessions',sd.id,'participants'));
+      ppSnap.forEach(pd=>{
+        sess.participants.push({
+          id:pd.id, name:pd.data().name,
+          elapsed:pd.data().elapsed||0,
+          isRunning:false, startTime:null,
+          laps:pd.data().laps||[],
+          isSelected:false,
+          lastDist:pd.data().lastDist||null
+        });
+      });
+      window._sessions.push(sess);
     }
-    window._sessions.sort((a,b)=>b.date.localeCompare(a.date));
-    if(window._curNav==='sessions') renderSessions();
-  });
+    window._sessions.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 
-  // Load global participants
-  const pSnap = await getDocs(collection(db,'participants'));
-  pSnap.forEach(d=>{ if(!window._globalP.find(p=>p.id===d.id)) window._globalP.push({id:d.id,name:d.data().name}); });
+    // Participants globaux
+    const pSnap = await getDocs(collection(db,'participants'));
+    pSnap.forEach(d=>{ window._globalP.push({id:d.id,name:d.data().name}); });
 
-  // Load séries
-  const srSnap = await getDocs(collection(db,'series'));
-  srSnap.forEach(d=>{
-    const data=d.data();
-    if(!window._series[data.dateKey]) window._series[data.dateKey]=[];
-    if(!window._series[data.dateKey].find(s=>s.id===data.id))
+    // Séries
+    const srSnap = await getDocs(collection(db,'series'));
+    srSnap.forEach(d=>{
+      const data=d.data();
+      if(!window._series[data.dateKey]) window._series[data.dateKey]=[];
       window._series[data.dateKey].push({id:data.id,dist:data.dist,entries:data.entries||[]});
+    });
+
+    renderSessions();
+    renderCalendar();
+    renderProg();
+  } catch(e) { console.warn('Erreur chargement Firebase',e); }
+
+  // 2. Listener temps réel — uniquement pour suppressions et modifications
+  //    (les ajouts sont gérés localement pour éviter les doublons)
+  onSnapshot(collection(db,'sessions'), (snap) => {
+    snap.docChanges().forEach(change => {
+      if(change.type === 'removed') {
+        window._sessions = window._sessions.filter(s=>s.id!==change.doc.id);
+        if(window._curNav==='sessions') renderSessions();
+      } else if(change.type === 'modified') {
+        const data = change.doc.data();
+        const existing = window._sessions.find(s=>s.id===change.doc.id);
+        if(existing) { existing.name=data.name; existing.date=data.date; }
+        if(window._curNav==='sessions') renderSessions();
+      }
+      // 'added' ignoré ici — géré au chargement initial et lors de createSession()
+    });
   });
-  renderSessions();
 }
 </script>
 
