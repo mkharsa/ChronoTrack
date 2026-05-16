@@ -63,6 +63,11 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   background:var(--blue);border:none;color:white;font-family:'DM Sans',sans-serif;
   font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .btn-primary:active{opacity:0.8}
+.btn-select{display:flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;
+  background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.btn-select.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+.btn-select:active{opacity:0.8}
 
 /* SESSIONS */
 .sessions-list{padding:0 16px;display:flex;flex-direction:column;gap:10px}
@@ -309,7 +314,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 <div class="view active" id="view-sessions">
   <div class="view-header">
     <div><div class="view-title">Mes sessions</div><div class="view-subtitle" id="sessions-subtitle">Aucune session</div></div>
-    <button class="btn-primary" onclick="openNewSessionModal()">+ Nouvelle</button>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn-select" id="btn-select-mode" onclick="toggleBulkMode()">☑ Sélectionner</button>
+      <button class="btn-primary" onclick="openNewSessionModal()">+ Nouvelle</button>
+    </div>
   </div>
   <div class="bulk-bar" id="bulk-bar">
     <span class="bulk-count" id="bulk-count">0 sélectionnée(s)</span>
@@ -601,7 +609,14 @@ function navigate(tab){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+tab).classList.add('active');
   document.getElementById('nav-'+tab).classList.add('active');
-  if(tab==='calendar') renderCalendar();
+  if(tab==='calendar'){
+    // Aller au mois courant et sélectionner aujourd'hui
+    const t=new Date();
+    window._calYear=t.getFullYear();
+    window._calMonth=t.getMonth();
+    window._calSelDay=todayISO();
+    renderCalendar();
+  }
   if(tab==='prog') renderProg();
 }
 
@@ -671,8 +686,7 @@ function renderSessions(){
   if(!window._sessions.length){list.innerHTML='';list.appendChild(empty);empty.style.display='flex';return;}
   empty.style.display='none';
   const bm=window._bulkMode;
-  list.innerHTML=window._sessions.map(s=>{
-    const checked=window._bulkSel.has(s.id);
+  list.innerHTML=window._sessions.map(s=>{    const checked=window._bulkSel.has(s.id);
     return`<div class="session-card ${bm?'bulk-mode':''} ${checked?'checked':''}">
       <div class="session-check" onclick="toggleBulkSel('${s.id}')">
         <div class="session-cb"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
@@ -688,18 +702,27 @@ function renderSessions(){
       <button class="session-del-btn" onclick="askDeleteSingle('${s.id}','${s.name.replace(/'/g,"\\'")}')">🗑</button>
     </div>`;
   }).join('');
-  // Long press → mode sélection multiple
-  list.querySelectorAll('.session-card-body').forEach(el=>{
-    let t;
-    el.addEventListener('pointerdown',()=>{t=setTimeout(()=>{if(!window._bulkMode)enterBulkMode();},600);});
-    el.addEventListener('pointerup',()=>clearTimeout(t));
-    el.addEventListener('pointermove',()=>clearTimeout(t));
-  });
 }
 
 // ── SUPPRESSION MULTIPLE ───────────────────────────────────────
-function enterBulkMode(){window._bulkMode=true;window._bulkSel=new Set();document.getElementById('bulk-bar').classList.add('show');renderSessions();showToast('Mode sélection activé — coche les sessions');}
-function exitBulkMode(){window._bulkMode=false;window._bulkSel=new Set();document.getElementById('bulk-bar').classList.remove('show');renderSessions();}
+function toggleBulkMode(){
+  if(window._bulkMode) exitBulkMode();
+  else enterBulkMode();
+}
+function enterBulkMode(){
+  window._bulkMode=true;window._bulkSel=new Set();
+  document.getElementById('bulk-bar').classList.add('show');
+  document.getElementById('btn-select-mode').classList.add('active');
+  document.getElementById('btn-select-mode').textContent='✕ Annuler';
+  renderSessions();
+}
+function exitBulkMode(){
+  window._bulkMode=false;window._bulkSel=new Set();
+  document.getElementById('bulk-bar').classList.remove('show');
+  const btn=document.getElementById('btn-select-mode');
+  btn.classList.remove('active');btn.textContent='☑ Sélectionner';
+  renderSessions();
+}
 function toggleBulkSel(id){
   if(window._bulkSel.has(id))window._bulkSel.delete(id);else window._bulkSel.add(id);
   document.getElementById('bulk-count').textContent=`${window._bulkSel.size} sélectionnée(s)`;
@@ -775,7 +798,13 @@ function ct(p){return p.isRunning&&p.startTime?p.elapsed+(now()-p.startTime):p.e
 
 function startSelected(){
   const t=now();let n=0;
-  ps().forEach(p=>{if(p.isSelected&&!p.isRunning){p.isRunning=true;p.startTime=t;p.elapsed=0;n++;}});
+  ps().forEach(p=>{
+    if(p.isSelected&&!p.isRunning){
+      p.isRunning=true;p.startTime=t;p.elapsed=0;
+      p.laps=[]; // réinitialiser les laps à chaque nouvelle rep
+      n++;
+    }
+  });
   startTicker();renderAll();if(n)showToast(`▶ ${n} démarré(s)`);
 }
 
@@ -787,6 +816,7 @@ function stopAndSave(){
       if(!p.times)p.times=[];
       p.times.push(t);
       p.elapsed=0;p.isRunning=false;p.startTime=null;
+      p.laps=[]; // réinitialiser les laps après enregistrement
       stopped.push({p,t});
     }
   });
@@ -1094,8 +1124,10 @@ document.getElementById('ns-name').addEventListener('keydown',e=>{if(e.key==='En
 let _tt=null;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);}
 
-// INIT
-window._calYear=2026;window._calMonth=0;
+// INIT — calendrier positionné sur le mois courant
+const _today=new Date();
+window._calYear=_today.getFullYear();
+window._calMonth=_today.getMonth();
 renderSessions();renderCalendar();renderProg();
 </script>
 </body>
