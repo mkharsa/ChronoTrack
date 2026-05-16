@@ -345,7 +345,6 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
     <div class="iot-btns">
       <button class="iot-btn start" id="btn-start" onclick="startSelected()" disabled><span class="bi">▶</span><span class="bl">START</span></button>
       <button class="iot-btn stop"  id="btn-stop"  onclick="stopAndSave()"   disabled><span class="bi">⏹</span><span class="bl">STOP</span></button>
-      <button class="iot-btn lap"   id="btn-lap"   onclick="lapAll()"        disabled><span class="bi">🚩</span><span class="bl">LAP</span></button>
       <button class="iot-btn reset"                onclick="resetAll()"             ><span class="bi">↺</span><span class="bl">RESET</span></button>
     </div>
   </div>
@@ -707,29 +706,44 @@ function toggleBulkSel(id){
   renderSessions();
 }
 function bulkDelete(){
-  if(!window._bulkSel.size){showToast('Aucune session sélectionnée');return;}
+  if(!window._bulkSel.size){showToast('Sélectionne au moins une session');return;}
   window._deleteBulk=true;
   document.getElementById('confirm-msg').textContent=`Supprimer ${window._bulkSel.size} session(s) ? Action irréversible.`;
-  document.getElementById('confirm-delete').classList.add('open');
+  // Forcer l'ouverture avec un léger délai pour éviter les conflits d'événements
+  setTimeout(()=>document.getElementById('confirm-delete').classList.add('open'),50);
 }
 function askDeleteSingle(id,name){
   window._deleteTargetId=id;window._deleteBulk=false;
   document.getElementById('confirm-msg').textContent=`Supprimer "${name}" ? Action irréversible.`;
-  document.getElementById('confirm-delete').classList.add('open');
+  setTimeout(()=>document.getElementById('confirm-delete').classList.add('open'),50);
 }
-function closeConfirm(){document.getElementById('confirm-delete').classList.remove('open');window._deleteTargetId=null;window._deleteBulk=false;}
+function closeConfirm(){
+  document.getElementById('confirm-delete').classList.remove('open');
+  window._deleteTargetId=null;
+  // Ne pas reset _deleteBulk ici pour éviter une course condition
+  setTimeout(()=>{window._deleteBulk=false;},100);
+}
 function confirmDelete(){
-  if(window._deleteBulk){
+  const isBulk=window._deleteBulk;
+  document.getElementById('confirm-delete').classList.remove('open');
+  if(isBulk){
     const ids=[...window._bulkSel];
-    ids.forEach(id=>{window._sessions=window._sessions.filter(s=>s.id!==id);fbDeleteSession(id);});
+    if(!ids.length){showToast('Aucune session sélectionnée');return;}
+    ids.forEach(id=>{
+      window._sessions=window._sessions.filter(s=>s.id!==id);
+      fbDeleteSession(id);
+    });
     showToast(`${ids.length} session(s) supprimée(s) ✓`);
     exitBulkMode();
   }else{
+    if(!window._deleteTargetId)return;
     window._sessions=window._sessions.filter(s=>s.id!==window._deleteTargetId);
     fbDeleteSession(window._deleteTargetId);
     showToast('Session supprimée ✓');
   }
-  closeConfirm();renderSessions();
+  window._deleteTargetId=null;
+  window._deleteBulk=false;
+  renderSessions();
 }
 
 // ── ADD PARTICIPANT ─────────────────────────────────────────────
@@ -848,7 +862,6 @@ function renderAll(){
   document.getElementById('sel-count').textContent=`${sel}/${all.length} sélectionné(s)`;
   document.getElementById('btn-start').disabled=!(sel>0&&all.some(p=>p.isSelected&&!p.isRunning));
   document.getElementById('btn-stop').disabled =!(sel>0&&all.some(p=>p.isSelected&&p.isRunning));
-  document.getElementById('btn-lap').disabled  =run===0;
   if(!all.length){list.innerHTML=`<div class="empty-state" style="padding:40px 20px"><div class="ei">👥</div><div class="ep">Appuie sur + pour ajouter</div></div>`;return;}
   list.innerHTML=all.map(p=>{
     const t=fms(ct(p)),ini=p.name[0].toUpperCase();
@@ -889,7 +902,9 @@ function renderAll(){
       </div>
       ${history}
       ${showAct?`<div class="p-actions">
-        ${p.isRunning?`<button class="p-action-btn lap" onclick="event.stopPropagation();lapOne('${p.id}')">🚩 Lap</button>`:'<span></span>'}
+        ${p.isRunning
+          ?`<button class="p-action-btn lap" onclick="event.stopPropagation();lapOne('${p.id}')">🚩 Lap</button>`
+          :`<span></span>`}
         <button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button>
       </div>`:''}
     </div>`;
@@ -1074,7 +1089,6 @@ function renderProg(){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-document.getElementById('confirm-delete').addEventListener('click',e=>{if(e.target===document.getElementById('confirm-delete'))closeConfirm();});
 document.getElementById('ns-name').addEventListener('keydown',e=>{if(e.key==='Enter')createSession();});
 
 let _tt=null;
