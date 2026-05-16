@@ -77,6 +77,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .bulk-count{flex:1;font-size:13px;font-weight:500;color:var(--blue)}
 .bulk-cancel-btn{padding:6px 10px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .bulk-del-btn{padding:6px 12px;border-radius:8px;background:var(--red);border:none;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.bulk-confirm-btn{padding:6px 12px;border-radius:8px;background:#b91c1c;border:none;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;animation:pulse-red .6s infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.7}}
 
 .session-card{background:var(--bg2);border:1px solid rgba(0,0,0,0.08);border-radius:14px;
   overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;align-items:stretch;transition:border-color .2s,background .2s}
@@ -336,7 +338,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   <div class="bulk-bar" id="bulk-bar">
     <span class="bulk-count" id="bulk-count">0 sélectionnée(s)</span>
     <button class="bulk-cancel-btn" onclick="exitBulkMode()">Annuler</button>
-    <button class="bulk-del-btn" onclick="bulkDelete()">🗑 Supprimer</button>
+    <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDeleteStep()">🗑 Supprimer</button>
+    <button class="bulk-confirm-btn" id="bulk-confirm-btn" onclick="bulkDeleteConfirm()" style="display:none">✓ Confirmer</button>
   </div>
   <div class="sessions-list" id="sessions-list">
     <div class="empty-state" id="empty-sessions">
@@ -765,6 +768,10 @@ function enterBulkMode(){
 function exitBulkMode(){
   window._bulkMode=false;window._bulkSel=new Set();
   document.getElementById('bulk-bar').classList.remove('show');
+  // Réinitialiser les boutons
+  document.getElementById('bulk-del-btn').style.display='';
+  document.getElementById('bulk-confirm-btn').style.display='none';
+  document.getElementById('bulk-count').textContent='0 sélectionnée(s)';
   const btn=document.getElementById('btn-select-mode');
   btn.classList.remove('active');btn.textContent='☑ Sélectionner';
   renderSessions();
@@ -776,10 +783,20 @@ function toggleBulkSel(id){
 }
 function bulkDelete(){
   if(!window._bulkSel.size){showToast('Sélectionne au moins une session');return;}
-  window._deleteBulk=true;
-  document.getElementById('confirm-msg').textContent=`Supprimer ${window._bulkSel.size} session(s) ? Action irréversible.`;
-  // Forcer l'ouverture avec un léger délai pour éviter les conflits d'événements
-  setTimeout(()=>document.getElementById('confirm-delete').classList.add('open'),50);
+  // Passer en mode confirmation — bouton change, pas de modale
+  document.getElementById('bulk-del-btn').style.display='none';
+  document.getElementById('bulk-confirm-btn').style.display='';
+  document.getElementById('bulk-count').textContent=`❗ Supprimer ${window._bulkSel.size} session(s) ?`;
+}
+function bulkDeleteConfirm(){
+  const ids=[...window._bulkSel];
+  ids.forEach(id=>{
+    window._sessions=window._sessions.filter(s=>s.id!==id);
+    fbDeleteSession(id);
+  });
+  showToast(`${ids.length} session(s) supprimée(s) ✓`);
+  exitBulkMode();
+  renderSessions();
 }
 function askDeleteSingle(id,name){
   window._deleteTargetId=id;window._deleteBulk=false;
@@ -956,11 +973,12 @@ function renderAll(){
     const times=p.times||[],hasT=times.length>0;
     const laps=p.laps||[],hasL=laps.length>0;
     const avgT=avg(times);
+    // showAct = true dès que le chrono tourne OU qu'il y a des données
     const showAct=p.isRunning||hasT||hasL;
     let cl='p-card';
     if(p.isSelected)cl+=' selected';
-    if(p.isRunning)cl+=' running';
-    if(showAct)cl+=' show-actions';
+    if(p.isRunning)cl+=' running show-actions'; // toujours show-actions quand running
+    else if(showAct)cl+=' show-actions';
 
     const status=p.isRunning
       ?`<div class="p-status"><div class="dot"></div> En cours${hasT?` · <span class="p-reps">Rep ${times.length+1}</span>`:`<span class="p-reps">Rep 1</span>`}</div>`
