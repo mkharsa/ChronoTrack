@@ -410,7 +410,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 <div class="hdr">
   <div class="hdr-logo">⏱</div>
   <div class="hdr-name">ChronoTrack</div>
-  <div class="hdr-ver">v2.0.1</div>
+  <div class="hdr-ver">v2.0.0</div>
   <div class="hdr-ble off" id="ble"><div class="ble-dot" id="ble-dot"></div><span id="ble-txt">Hors ligne</span></div>
 </div>
 
@@ -827,11 +827,14 @@ function renderSessions() {
 
   list.innerHTML = window.SESS.map(s => {
     const sel = window.BULKSEL.has(s.id);
+    const cbStyle = sel
+      ? 'width:22px;height:22px;border-radius:6px;border:2px solid var(--blue);background:var(--blue);display:flex;align-items:center;justify-content:center'
+      : 'width:22px;height:22px;border-radius:6px;border:2px solid var(--faint);background:#fff;display:flex;align-items:center;justify-content:center';
     return `
-    <div class="s-card${sel?' sel':''}">
+    <div class="s-card${sel?' sel':''}" style="${sel?'border-color:var(--blue);background:#f0f7ff;':''}">
       <div class="s-check" style="display:flex" onclick="toggleBulkSel('${s.id}')">
-        <div class="s-cb">
-          <svg class="s-cb-tick" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="1.5,6.5 4.5,9.5 10.5,2.5"/></svg>
+        <div style="${cbStyle}">
+          ${sel?`<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" width="12" height="12"><polyline points="1.5,6.5 4.5,9.5 10.5,2.5"/></svg>`:''}
         </div>
       </div>
       <div class="s-body" onclick="openSess('${s.id}')">
@@ -933,7 +936,9 @@ function doStart() {
   const t = now(); let n = 0;
   ps().forEach(p => {
     if (p.isSelected && !p.isRunning) {
-      p.isRunning=true; p.startTime=t; p.elapsed=0; p.laps=[]; n++;
+      p.isRunning=true; p.startTime=t; p.elapsed=0;
+      // Ne pas réinitialiser les laps — ils s'accumulent entre les reps
+      n++;
     }
   });
   startTicker(); renderChrono(); if(n) toast(`▶ ${n} démarré(s)`);
@@ -1077,11 +1082,17 @@ function renderChrono() {
       repsHtml += `</div>`;
     }
 
-    // Laps chips
+    // Laps chips - affiche durée du lap ET temps total au moment du lap
     let lapsHtml = '';
     if (hasL) {
       lapsHtml = `<div class="p-laps-row">`;
-      laps.forEach((l,i) => { lapsHtml += `<div class="lap-chip"><span class="lc-lbl">Lap ${i+1}</span><span class="lc-val">${fms(l.lap)}</span></div>`; });
+      laps.forEach((l,i) => {
+        lapsHtml += `<div class="lap-chip">
+          <span class="lc-lbl">Lap ${i+1}</span>
+          <span class="lc-val">${fms(l.lap)}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">@ ${fms(l.total)}</span>
+        </div>`;
+      });
       lapsHtml += `</div>`;
     }
 
@@ -1100,9 +1111,16 @@ function renderChrono() {
     if (p.isSelected) cls += ' sel';
     if (p.isRunning)  cls += ' run';
 
+    // Checkbox avec style inline pour garantir l'affichage
+    const chkStyle = p.isSelected
+      ? 'width:20px;height:20px;border-radius:5px;border:2px solid var(--blue);background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0'
+      : 'width:20px;height:20px;border-radius:5px;border:2px solid var(--faint);background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+
     return `<div class="${cls}" data-id="${p.id}">
       <div class="p-top" onclick="toggleSel('${p.id}')">
-        <div class="p-chk"><svg class="p-chk-tick" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="1.5,6.5 4.5,9.5 10.5,2.5"/></svg></div>
+        <div style="${chkStyle}">
+          ${p.isSelected?`<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" width="11" height="11"><polyline points="1.5,6.5 4.5,9.5 10.5,2.5"/></svg>`:''}
+        </div>
         <div class="p-av">${p.name[0].toUpperCase()}</div>
         <div class="p-info"><div class="p-name">${p.name}</div>${statHtml}</div>
         <div class="p-time">${fms(ct(p))}</div>
