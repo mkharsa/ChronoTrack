@@ -136,14 +136,23 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .p-reps{font-size:10px;padding:1px 6px;border-radius:6px;background:var(--green-dim);color:var(--green);font-weight:600}
 .p-time{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--muted);letter-spacing:1px;flex-shrink:0;transition:color .3s}
 .p-card.running .p-time{color:var(--blue)}
-.p-times-history{border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;background:var(--bg3)}
-.p-times-row{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px}
-.p-times-num{color:var(--muted);width:45px;flex-shrink:0}
-.p-times-val{font-family:'DM Mono',monospace;font-weight:500;color:var(--cyan)}
-.p-times-lap{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto}
-.p-avg-row{margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;gap:6px;font-size:12px}
-.p-avg-label{color:var(--muted);flex:1}
-.p-avg-val{font-family:'DM Mono',monospace;font-weight:700;color:var(--green);font-size:13px}
+.p-times-history{border-top:1px solid rgba(0,0,0,0.05);padding:10px 14px;background:var(--bg3)}
+.p-times-scroll{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding-bottom:4px}
+.p-times-scroll::-webkit-scrollbar{height:3px}
+.p-times-scroll::-webkit-scrollbar-thumb{background:var(--faint);border-radius:2px}
+.p-rep-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:white;border:1px solid rgba(0,0,0,0.08);border-radius:9px;padding:6px 10px;min-width:70px}
+.p-rep-num{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.p-rep-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--cyan)}
+.p-rep-chip.avg-chip{background:var(--green-dim);border-color:rgba(6,167,125,0.25)}
+.p-rep-chip.avg-chip .p-rep-num{color:var(--green)}
+.p-rep-chip.avg-chip .p-rep-val{color:var(--green)}
+.p-times-laps{margin-top:8px;display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:2px}
+.p-times-laps::-webkit-scrollbar{display:none}
+.p-lap-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:white;border:1px solid rgba(0,0,0,0.06);border-radius:9px;padding:5px 9px;min-width:64px}
+.p-lap-num{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.p-lap-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--blue)}
 .p-actions{border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;background:var(--bg3);display:none;gap:8px;justify-content:space-between}
 .p-card.show-actions .p-actions{display:flex}
 .p-action-btn{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:500;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px}
@@ -532,7 +541,7 @@ window._db=db;
 window.fbSaveSession  =async(s)=>{ if(!db)return; await setDoc(doc(db,'sessions',s.id),{name:s.name,date:s.date,defaultDist:s.defaultDist||null,createdAt:serverTimestamp()},{merge:true}); };
 window.fbDeleteSession=async(id)=>{ if(!db)return; await deleteDoc(doc(db,'sessions',id)); };
 window.fbSaveGlobalP  =async(p)=>{ if(!db)return; await setDoc(doc(db,'participants',p.id),{name:p.name},{merge:true}); };
-window.fbSaveSessP    =async(sid,p)=>{ if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,lastDist:p.lastDist||null,times:p.times||[]},{merge:true}); };
+window.fbSaveSessP    =async(sid,p)=>{ if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,lastDist:p.lastDist||null},{merge:true}); };
 window.fbSaveSerie    =async(dateKey,serie)=>{ if(!db)return; await setDoc(doc(db,'series',dateKey+'_'+serie.id),{dateKey,id:serie.id,dist:serie.dist,entries:serie.entries,createdAt:serverTimestamp()}); };
 
 if(db){
@@ -544,8 +553,14 @@ if(db){
       const sess={id:sd.id,name:data.name,date:data.date||'',defaultDist:data.defaultDist||null,participants:[]};
       const ppSnap=await getDocs(collection(db,'sessions',sd.id,'participants'));
       ppSnap.forEach(pd=>{
-        sess.participants.push({id:pd.id,name:pd.data().name,elapsed:0,isRunning:false,startTime:null,
-          laps:[],isSelected:false,lastDist:pd.data().lastDist||null,times:pd.data().times||[]});
+        sess.participants.push({
+          id:pd.id,name:pd.data().name,
+          elapsed:0,isRunning:false,startTime:null,
+          laps:[],   // laps = local seulement, pas persisté
+          times:[],  // times = local seulement, pas persisté
+          isSelected:false,
+          lastDist:pd.data().lastDist||null
+        });
       });
       window._sessions.push(sess);
     }
@@ -876,8 +891,20 @@ function lapOne(id){
   p.laps.push({lap:tot-prev,total:tot});
   renderAll();showToast(`🚩 Lap — ${p.name}`);
 }
-function resetAll(){ps().forEach(p=>{p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];fbSaveSessP(window._curSess.id,p);});stopTicker();renderAll();showToast('↺ Tout réinitialisé');}
-function resetOne(id){const p=ps().find(p=>p.id===id);if(!p)return;p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];fbSaveSessP(window._curSess.id,p);checkTicker();renderAll();}
+// Reset = remet l'affichage à zéro SANS toucher aux séries Firebase déjà enregistrées
+function resetAll(){
+  ps().forEach(p=>{
+    p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];
+    // Ne PAS appeler fbSaveSessP ici — les séries sont déjà sauvegardées séparément
+  });
+  stopTicker();renderAll();showToast('↺ Chrono réinitialisé');
+}
+function resetOne(id){
+  const p=ps().find(p=>p.id===id);if(!p)return;
+  p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];
+  // Ne PAS appeler fbSaveSessP — les séries restent dans Firebase
+  checkTicker();renderAll();
+}
 function toggleSelect(id){const p=ps().find(p=>p.id===id);if(p){p.isSelected=!p.isSelected;renderAll();}}
 function selectAll(){ps().forEach(p=>p.isSelected=true);renderAll();}
 function deselectAll(){ps().forEach(p=>p.isSelected=false);renderAll();}
@@ -909,16 +936,28 @@ function renderAll(){
       :hasT?`<div class="p-status"><span class="p-reps">${times.length} rep(s)</span>${p.lastDist?' · '+p.lastDist:''}</div>`
       :`<div class="p-status">En attente${p.lastDist?' · '+p.lastDist:''}</div>`;
 
-    // Historique reps + laps
+    // Historique reps + laps en chips horizontaux
     let history='';
     if(hasT||hasL){
       history=`<div class="p-times-history">`;
       if(hasT){
-        times.forEach((tv,i)=>{ history+=`<div class="p-times-row"><span class="p-times-num">Rep ${i+1}</span><span class="p-times-val">${fms(tv)}</span></div>`; });
-        if(times.length>1) history+=`<div class="p-avg-row"><span class="p-avg-label">Moyenne ${times.length} reps</span><span class="p-avg-val">${fms(avgT)}</span></div>`;
+        // Chips reps côte à côte
+        history+=`<div class="p-times-scroll">`;
+        times.forEach((tv,i)=>{
+          history+=`<div class="p-rep-chip"><span class="p-rep-num">Rep ${i+1}</span><span class="p-rep-val">${fms(tv)}</span></div>`;
+        });
+        if(times.length>1){
+          history+=`<div class="p-rep-chip avg-chip"><span class="p-rep-num">Moy.</span><span class="p-rep-val">${fms(avgT)}</span></div>`;
+        }
+        history+=`</div>`;
       }
       if(hasL){
-        laps.forEach((l,i)=>{ history+=`<div class="p-times-row"><span class="p-times-num">Lap ${i+1}</span><span class="p-times-val">${fms(l.lap)}</span><span class="p-times-lap">Total ${fms(l.total)}</span></div>`; });
+        // Laps en chips horizontaux sous les reps
+        history+=`<div class="p-times-laps">`;
+        laps.forEach((l,i)=>{
+          history+=`<div class="p-lap-chip"><span class="p-lap-num">Lap ${i+1}</span><span class="p-lap-val">${fms(l.lap)}</span></div>`;
+        });
+        history+=`</div>`;
       }
       history+=`</div>`;
     }
