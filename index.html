@@ -85,9 +85,6 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .session-card.checked{border-color:var(--blue);background:#f0f7ff}
 .session-check{width:44px;display:none;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;border-right:1px solid rgba(0,0,0,0.06)}
-.session-card.bulk-mode .session-check{display:flex !important}
-.session-card.bulk-mode .session-del-btn{display:none !important}
-.session-card:not(.bulk-mode) .session-check{display:none !important}
 .session-cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--faint);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .session-card.checked .session-cb{background:var(--blue);border-color:var(--blue)}
 .session-cb svg{display:none;width:12px;height:12px}
@@ -338,7 +335,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
   <div class="bulk-bar" id="bulk-bar">
     <span class="bulk-count" id="bulk-count">0 sélectionnée(s)</span>
     <button class="bulk-cancel-btn" onclick="exitBulkMode()">Annuler</button>
-    <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDeleteStep()">🗑 Supprimer</button>
+    <button class="bulk-del-btn" id="bulk-del-btn" onclick="bulkDelete()">🗑 Supprimer</button>
     <button class="bulk-confirm-btn" id="bulk-confirm-btn" onclick="bulkDeleteConfirm()" style="display:none">✓ Confirmer</button>
   </div>
   <div class="sessions-list" id="sessions-list">
@@ -1033,8 +1030,8 @@ function renderAll(){
         <button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button>
       </div>` : '';
 
-    return`<div class="${cl}" data-id="${p.id}" onclick="toggleSelect('${p.id}')">
-      <div class="p-card-main">
+    return`<div class="${cl}" data-id="${p.id}">
+      <div class="p-card-main" onclick="toggleSelect('${p.id}')">
         <div class="p-checkbox"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
         <div class="p-avatar">${ini}</div>
         <div class="p-info"><div class="p-name">${p.name}</div>${status}</div>
