@@ -551,6 +551,7 @@ window.fbDeleteSession=async(id)=>{ if(!db)return; await deleteDoc(doc(db,'sessi
 window.fbSaveGlobalP  =async(p)=>{ if(!db)return; await setDoc(doc(db,'participants',p.id),{name:p.name},{merge:true}); };
 window.fbSaveSessP    =async(sid,p)=>{ if(!db)return; await setDoc(doc(db,'sessions',sid,'participants',p.id),{name:p.name,lastDist:p.lastDist||null},{merge:true}); };
 window.fbSaveSerie    =async(dateKey,serie)=>{ if(!db)return; await setDoc(doc(db,'series',dateKey+'_'+serie.id),{dateKey,id:serie.id,dist:serie.dist,entries:serie.entries,createdAt:serverTimestamp()}); };
+window.fbDeleteSerie  =async(dateKey,serieId)=>{ if(!db)return; await deleteDoc(doc(db,'series',dateKey+'_'+serieId)); };
 
 if(db){
   try{
@@ -721,8 +722,10 @@ function createSession(){
   });
   window._sessions.unshift(s);
   fbSaveSession(s);s.participants.forEach(p=>fbSaveSessP(s.id,p));
-  closeModal('modal-new-session');showToast(`"${name}" créée ✓`);
-  renderSessions();openSession(s.id);
+  closeModal('modal-new-session');
+  renderSessions(); // mettre à jour la liste immédiatement
+  showToast(`"${name}" créée ✓`);
+  setTimeout(()=>openSession(s.id), 150); // petit délai pour que le toast soit visible
 }
 
 function renderSessions(){
@@ -939,19 +942,32 @@ function lapOne(id){
   p.laps.push({lap:tot-prev,total:tot});
   renderAll();showToast(`🚩 Lap — ${p.name}`);
 }
-// Reset = remet l'affichage à zéro SANS toucher aux séries Firebase déjà enregistrées
+// Reset = remet le chrono à zéro ET supprime les séries de cette session du calendrier/progression
 function resetAll(){
-  ps().forEach(p=>{
-    p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];
-    // Ne PAS appeler fbSaveSessP ici — les séries sont déjà sauvegardées séparément
-  });
-  stopTicker();renderAll();showToast('↺ Chrono réinitialisé');
+  const dateKey=window._curSess.date||todayISO();
+  ps().forEach(p=>{p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];});
+  // Supprimer les séries de ce jour liées à cette session de Firebase et localement
+  if(window._series[dateKey]){
+    window._series[dateKey].forEach(serie=>fbDeleteSerie(dateKey,serie.id));
+    delete window._series[dateKey];
+  }
+  stopTicker();renderAll();renderProg();renderCalendar();
+  showToast('↺ Réinitialisé — données supprimées');
 }
 function resetOne(id){
   const p=ps().find(p=>p.id===id);if(!p)return;
+  const dateKey=window._curSess.date||todayISO();
   p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];
-  // Ne PAS appeler fbSaveSessP — les séries restent dans Firebase
-  checkTicker();renderAll();
+  // Supprimer les séries de ce participant pour ce jour
+  if(window._series[dateKey]){
+    window._series[dateKey]=window._series[dateKey].filter(serie=>{
+      const hasP=serie.entries.some(e=>e.pid===p.id);
+      if(hasP) fbDeleteSerie(dateKey,serie.id);
+      return !hasP;
+    });
+    if(!window._series[dateKey].length) delete window._series[dateKey];
+  }
+  checkTicker();renderAll();renderProg();renderCalendar();
 }
 function toggleSelect(id){const p=ps().find(p=>p.id===id);if(p){p.isSelected=!p.isSelected;renderAll();}}
 function selectAll(){ps().forEach(p=>p.isSelected=true);renderAll();}
@@ -963,7 +979,7 @@ function checkTicker(){if(!ps().some(p=>p.isRunning))stopTicker();}
 
 function renderAll(){
   const list=document.getElementById('participants-list');
-  const all=ps(),sel=all.filter(p=>p.isSelected).length,run=all.filter(p=>p.isRunning).length;
+  const all=ps(),sel=all.filter(p=>p.isSelected).length;
   document.getElementById('sel-count').textContent=`${sel}/${all.length} sélectionné(s)`;
   document.getElementById('btn-start').disabled=!(sel>0&&all.some(p=>p.isSelected&&!p.isRunning));
   document.getElementById('btn-stop').disabled =!(sel>0&&all.some(p=>p.isSelected&&p.isRunning));
@@ -973,35 +989,31 @@ function renderAll(){
     const times=p.times||[],hasT=times.length>0;
     const laps=p.laps||[],hasL=laps.length>0;
     const avgT=avg(times);
-    // showAct = true dès que le chrono tourne OU qu'il y a des données
-    const showAct=p.isRunning||hasT||hasL;
+
     let cl='p-card';
-    if(p.isSelected)cl+=' selected';
-    if(p.isRunning)cl+=' running show-actions'; // toujours show-actions quand running
-    else if(showAct)cl+=' show-actions';
+    if(p.isSelected) cl+=' selected';
+    if(p.isRunning)  cl+=' running';
 
     const status=p.isRunning
-      ?`<div class="p-status"><div class="dot"></div> En cours${hasT?` · <span class="p-reps">Rep ${times.length+1}</span>`:`<span class="p-reps">Rep 1</span>`}</div>`
-      :hasT?`<div class="p-status"><span class="p-reps">${times.length} rep(s)</span>${p.lastDist?' · '+p.lastDist:''}</div>`
+      ?`<div class="p-status"><div class="dot"></div> En cours · <span class="p-reps">Rep ${times.length+1}</span></div>`
+      :hasT
+      ?`<div class="p-status"><span class="p-reps">${times.length} rep(s)</span>${p.lastDist?' · '+p.lastDist:''}</div>`
       :`<div class="p-status">En attente${p.lastDist?' · '+p.lastDist:''}</div>`;
 
-    // Historique reps + laps en chips horizontaux
+    // Historique reps en chips horizontaux
     let history='';
     if(hasT||hasL){
       history=`<div class="p-times-history">`;
       if(hasT){
-        // Chips reps côte à côte
         history+=`<div class="p-times-scroll">`;
         times.forEach((tv,i)=>{
           history+=`<div class="p-rep-chip"><span class="p-rep-num">Rep ${i+1}</span><span class="p-rep-val">${fms(tv)}</span></div>`;
         });
-        if(times.length>1){
+        if(times.length>1)
           history+=`<div class="p-rep-chip avg-chip"><span class="p-rep-num">Moy.</span><span class="p-rep-val">${fms(avgT)}</span></div>`;
-        }
         history+=`</div>`;
       }
       if(hasL){
-        // Laps en chips horizontaux sous les reps
         history+=`<div class="p-times-laps">`;
         laps.forEach((l,i)=>{
           history+=`<div class="p-lap-chip"><span class="p-lap-num">Lap ${i+1}</span><span class="p-lap-val">${fms(l.lap)}</span></div>`;
@@ -1011,6 +1023,16 @@ function renderAll(){
       history+=`</div>`;
     }
 
+    // Barre d'actions — toujours visible si running OU si données
+    const showActions = p.isRunning || hasT || hasL;
+    const actionsHtml = showActions ? `
+      <div class="p-actions" style="display:flex;border-top:1px solid rgba(0,0,0,0.05);padding:8px 14px;background:var(--bg3);justify-content:space-between;align-items:center">
+        ${p.isRunning
+          ?`<button class="p-action-btn lap" onclick="event.stopPropagation();lapOne('${p.id}')">🚩 Lap</button>`
+          :`<span></span>`}
+        <button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button>
+      </div>` : '';
+
     return`<div class="${cl}" data-id="${p.id}" onclick="toggleSelect('${p.id}')">
       <div class="p-card-main">
         <div class="p-checkbox"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
@@ -1019,12 +1041,7 @@ function renderAll(){
         <div class="p-time">${t}</div>
       </div>
       ${history}
-      ${showAct?`<div class="p-actions">
-        ${p.isRunning
-          ?`<button class="p-action-btn lap" onclick="event.stopPropagation();lapOne('${p.id}')">🚩 Lap</button>`
-          :`<span></span>`}
-        <button class="p-action-btn reset" onclick="event.stopPropagation();resetOne('${p.id}')">↺ Reset</button>
-      </div>`:''}
+      ${actionsHtml}
     </div>`;
   }).join('');
   if(!window._ticker&&all.some(p=>p.isRunning))startTicker();
