@@ -868,13 +868,12 @@ function toggleBulkSel(id) {
 function bulkDel() {
   if (!window.BULKSEL.size) { toast('Coche au moins une session'); return; }
   const n = window.BULKSEL.size;
-  document.getElementById('conf-msg').textContent = `Supprimer ${n} session(s) ? Action irréversible.`;
-  window.CONFCB = () => {
-    [...window.BULKSEL].forEach(id=>{ window.SESS=window.SESS.filter(s=>s.id!==id); fbDelSess(id); });
-    toast(`${n} session(s) supprimée(s) ✓`);
-    exitBulk();
-  };
-  document.getElementById('conf').classList.add('on');
+  if (!confirm(`Supprimer ${n} session(s) ? Cette action est irréversible.`)) return;
+  [...window.BULKSEL].forEach(id=>{ window.SESS=window.SESS.filter(s=>s.id!==id); fbDelSess(id); });
+  toast(`${n} session(s) supprimée(s) ✓`);
+  window.BULKSEL = new Set();
+  updateBulkBar();
+  renderSessions();
 }
 function bulkConfirm() {}
 
@@ -937,7 +936,7 @@ function doStart() {
   ps().forEach(p => {
     if (p.isSelected && !p.isRunning) {
       p.isRunning=true; p.startTime=t; p.elapsed=0;
-      // Ne pas réinitialiser les laps — ils s'accumulent entre les reps
+      p.laps = []; // reset des laps courants pour cette nouvelle rep
       n++;
     }
   });
@@ -951,8 +950,11 @@ function doStop() {
       const t = ct(p);
       if (!p.times) p.times = [];
       p.times.push(t);
+      // Sauvegarder les laps de cette rep
+      if (!p.repLaps) p.repLaps = [];
+      p.repLaps.push([...p.laps]); // copie des laps de cette rep
+      p.laps = []; // reset pour la prochaine rep
       p.elapsed=0; p.isRunning=false; p.startTime=null;
-      // Ne pas effacer les laps — ils restent visibles après le STOP
       stopped.push({p,t});
     }
   });
@@ -1005,7 +1007,7 @@ function doLap(id) {
 
 function doReset() {
   const dk = window.CURSESS.date || today();
-  ps().forEach(p=>{p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];});
+  ps().forEach(p=>{p.elapsed=0;p.isRunning=false;p.startTime=null;p.laps=[];p.times=[];p.repLaps=[];});
   if (window.SERIES[dk]) {
     window.SERIES[dk].forEach(s=>fbDelSerie(dk,s.id));
     delete window.SERIES[dk];
@@ -1017,7 +1019,7 @@ function doReset() {
 function doResetOne(id) {
   const p = ps().find(p=>p.id===id); if (!p) return;
   const dk = window.CURSESS.date || today();
-  p.elapsed=0; p.isRunning=false; p.startTime=null; p.laps=[]; p.times=[];
+  p.elapsed=0; p.isRunning=false; p.startTime=null; p.laps=[]; p.times=[]; p.repLaps=[];
   if (window.SERIES[dk]) {
     window.SERIES[dk] = window.SERIES[dk].filter(s=>{
       const has = s.entries.some(e=>e.pid===p.id);
@@ -1073,28 +1075,45 @@ function renderChrono() {
       statHtml = `<div class="p-stat">En attente${p.lastDist?' · '+p.lastDist:''}</div>`;
     }
 
-    // Reps chips
+    // Reps + leurs laps en colonne
     let repsHtml = '';
-    if (hasT) {
-      repsHtml = `<div class="p-reps-row">`;
-      times.forEach((t,i) => { repsHtml += `<div class="rep-chip"><span class="rc-lbl">Rep ${i+1}</span><span class="rc-val">${fms(t)}</span></div>`; });
-      if (times.length > 1) repsHtml += `<div class="rep-chip avg"><span class="rc-lbl">Moy.</span><span class="rc-val">${fms(avgT)}</span></div>`;
+    const repLaps = p.repLaps || [];
+    if (hasT || (p.isRunning && laps.length > 0)) {
+      repsHtml = `<div style="padding:8px 13px 4px;display:flex;gap:8px;overflow-x:auto;align-items:flex-start">`;
+      // Reps terminées avec leurs laps
+      times.forEach((t,i) => {
+        const rl = repLaps[i] || [];
+        repsHtml += `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:76px">
+          <div class="rep-chip"><span class="rc-lbl">Rep ${i+1}</span><span class="rc-val">${fms(t)}</span></div>`;
+        rl.forEach((l,li) => {
+          repsHtml += `<div style="background:white;border:1px solid var(--border);border-radius:7px;padding:3px 7px;text-align:center">
+            <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase">Lap ${li+1}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--blue)">${fms(l.lap)}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">@ ${fms(l.total)}</div>
+          </div>`;
+        });
+        repsHtml += `</div>`;
+      });
+      // Laps de la rep en cours
+      if (p.isRunning && laps.length > 0) {
+        repsHtml += `<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:76px">
+          <div class="rep-chip" style="border:1.5px dashed var(--blue)"><span class="rc-lbl">En cours</span></div>`;
+        laps.forEach((l,li) => {
+          repsHtml += `<div style="background:var(--bluedim);border:1px solid rgba(0,119,182,.2);border-radius:7px;padding:3px 7px;text-align:center">
+            <div style="font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase">Lap ${li+1}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--blue)">${fms(l.lap)}</div>
+          </div>`;
+        });
+        repsHtml += `</div>`;
+      }
+      // Moyenne
+      if (times.length > 1) {
+        repsHtml += `<div style="flex-shrink:0;min-width:76px"><div class="rep-chip avg"><span class="rc-lbl">Moy.</span><span class="rc-val">${fms(avg(times))}</span></div></div>`;
+      }
       repsHtml += `</div>`;
     }
 
-    // Laps chips - affiche durée du lap ET temps total au moment du lap
     let lapsHtml = '';
-    if (hasL) {
-      lapsHtml = `<div class="p-laps-row">`;
-      laps.forEach((l,i) => {
-        lapsHtml += `<div class="lap-chip">
-          <span class="lc-lbl">Lap ${i+1}</span>
-          <span class="lc-val">${fms(l.lap)}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">@ ${fms(l.total)}</span>
-        </div>`;
-      });
-      lapsHtml += `</div>`;
-    }
 
     // Barre d'actions
     let actsHtml = '';
