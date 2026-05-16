@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Connected ChronoTrack</title>
+<title>Connected ChronoTrack v1.0.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -79,11 +79,13 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 .bulk-del-btn{padding:6px 12px;border-radius:8px;background:var(--red);border:none;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
 
 .session-card{background:var(--bg2);border:1px solid rgba(0,0,0,0.08);border-radius:14px;
-  overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;align-items:stretch;transition:border-color .2s}
+  overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;align-items:stretch;transition:border-color .2s,background .2s}
 .session-card.checked{border-color:var(--blue);background:#f0f7ff}
-.session-check{width:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border-right:1px solid rgba(0,0,0,0.06);display:none}
-.session-card.bulk-mode .session-check{display:flex}
-.session-card.bulk-mode .session-del-btn{display:none}
+.session-check{width:44px;display:none;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;border-right:1px solid rgba(0,0,0,0.06)}
+.session-card.bulk-mode .session-check{display:flex !important}
+.session-card.bulk-mode .session-del-btn{display:none !important}
+.session-card:not(.bulk-mode) .session-check{display:none !important}
 .session-cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--faint);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .session-card.checked .session-cb{background:var(--blue);border-color:var(--blue)}
 .session-cb svg{display:none;width:12px;height:12px}
@@ -315,7 +317,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(255,255,255,0.96);backd
 
 <header>
   <div class="logo-icon">⏱</div>
-  <div class="logo-text"><div class="sub">Connected</div><div class="main">ChronoTrack</div></div>
+  <div class="logo-text">
+    <div class="sub">Connected</div>
+    <div class="main">ChronoTrack <span style="font-size:10px;font-weight:400;color:var(--muted);letter-spacing:0;font-family:'DM Sans',sans-serif">v1.0.0</span></div>
+  </div>
   <div class="ble-badge disconnected" id="ble-badge"><div class="ble-dot" id="ble-dot"></div><span id="ble-label">Hors ligne</span></div>
 </header>
 
@@ -581,18 +586,39 @@ if(db){
     renderSessions();renderCalendar();renderProg();
   }catch(e){console.warn('Erreur Firebase',e);}
 
-  // Listener temps réel (suppression/modification uniquement)
+  // Listener temps réel - gère ajout, suppression, modification
+  // Flag pour ignorer le premier snapshot (données déjà chargées via getDocs)
+  let _firstSnapshot=true;
   onSnapshot(collection(db,'sessions'),(snap)=>{
+    // Ignorer le snapshot initial qui reflète le chargement getDocs déjà fait
+    if(_firstSnapshot){ _firstSnapshot=false; return; }
+
+    let changed=false;
     snap.docChanges().forEach(change=>{
+      const id=change.doc.id;
+      const data=change.doc.data();
       if(change.type==='removed'){
-        window._sessions=window._sessions.filter(s=>s.id!==change.doc.id);
-      }else if(change.type==='modified'){
-        const data=change.doc.data();
-        const ex=window._sessions.find(s=>s.id===change.doc.id);
-        if(ex){ex.name=data.name;ex.date=data.date;}
+        window._sessions=window._sessions.filter(s=>s.id!==id);
+        changed=true;
+      } else if(change.type==='modified'){
+        const ex=window._sessions.find(s=>s.id===id);
+        if(ex){ex.name=data.name;ex.date=data.date;ex.defaultDist=data.defaultDist||null;}
+        changed=true;
+      } else if(change.type==='added'){
+        // Ajouter seulement si pas déjà présent (évite les doublons)
+        if(!window._sessions.find(s=>s.id===id)){
+          window._sessions.unshift({
+            id, name:data.name, date:data.date||'',
+            defaultDist:data.defaultDist||null, participants:[]
+          });
+          changed=true;
+        }
       }
     });
-    if(window._curNav==='sessions') renderSessions();
+    if(changed){
+      window._sessions.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      if(window._curNav==='sessions') renderSessions();
+    }
   });
 }
 </script>
@@ -605,6 +631,8 @@ window._curNav='sessions'; window._calYear=2026; window._calMonth=0;
 window._calSelDay=null; window._progDist=null; window._progView='seance';
 window._pendingStop=[]; window._bulkMode=false; window._bulkSel=new Set();
 window._deleteTargetId=null; window._deleteBulk=false;
+
+const APP_VERSION='1.0.0';
 
 const MONTHS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const MONTHS_SHORT=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
@@ -701,10 +729,13 @@ function renderSessions(){
   if(!window._sessions.length){list.innerHTML='';list.appendChild(empty);empty.style.display='flex';return;}
   empty.style.display='none';
   const bm=window._bulkMode;
-  list.innerHTML=window._sessions.map(s=>{    const checked=window._bulkSel.has(s.id);
-    return`<div class="session-card ${bm?'bulk-mode':''} ${checked?'checked':''}">
-      <div class="session-check" onclick="toggleBulkSel('${s.id}')">
-        <div class="session-cb"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
+  list.innerHTML=window._sessions.map(s=>{
+    const checked=window._bulkSel.has(s.id);
+    return`<div class="session-card ${checked?'checked':''}" style="${bm?'border-color:'+(checked?'var(--blue)':'var(--border)'):''}">
+      <div class="session-check" style="width:44px;${bm?'display:flex':'display:none'};align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border-right:1px solid rgba(0,0,0,0.06)" onclick="toggleBulkSel('${s.id}')">
+        <div class="session-cb" style="width:20px;height:20px;border-radius:6px;border:1.5px solid ${checked?'var(--blue)':'var(--faint)'};background:${checked?'var(--blue)':'transparent'};display:flex;align-items:center;justify-content:center">
+          ${checked?`<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" width="12" height="12"><polyline points="2,6 5,9 10,3"/></svg>`:''}
+        </div>
       </div>
       <div class="session-card-body" onclick="${bm?`toggleBulkSel('${s.id}')`:`openSession('${s.id}')`}">
         <div class="session-icon">🏃</div>
@@ -714,7 +745,7 @@ function renderSessions(){
         </div>
         <div class="session-arrow">›</div>
       </div>
-      <button class="session-del-btn" onclick="askDeleteSingle('${s.id}','${s.name.replace(/'/g,"\\'")}')">🗑</button>
+      <button class="session-del-btn" style="${bm?'display:none':''}" onclick="askDeleteSingle('${s.id}','${s.name.replace(/'/g,"\\'")}')">🗑</button>
     </div>`;
   }).join('');
 }
