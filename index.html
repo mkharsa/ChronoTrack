@@ -422,15 +422,14 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
       <div class="sess-sub" id="sess-sub">Aucune session</div>
     </div>
     <div class="hdr-btns">
-      <button class="btn btn-outline" id="btn-sel" onclick="toggleBulk()">☑ Sélectionner</button>
       <button class="btn btn-blue" onclick="openModal('m-newsess')">+ Nouvelle</button>
     </div>
   </div>
-  <div class="bulk-bar" id="bulk-bar">
+  <div class="bulk-bar" id="bulk-bar" style="display:none">
     <span class="bulk-lbl" id="bulk-lbl">0 sélectionnée(s)</span>
-    <button class="btn btn-outline" onclick="exitBulk()">Annuler</button>
-    <button class="btn btn-red" id="bulk-del-btn" onclick="bulkDel()">🗑 Supprimer</button>
-    <button class="btn btn-red2" id="bulk-conf-btn" onclick="bulkConfirm()" style="display:none">✓ Confirmer</button>
+    <button class="btn btn-outline" onclick="bulkSelAll()">Tout</button>
+    <button class="btn btn-outline" onclick="bulkSelNone()">Aucun</button>
+    <button class="btn btn-red" onclick="bulkDel()">🗑 Supprimer</button>
   </div>
   <div class="sess-list" id="sess-list">
     <div class="empty" id="empty-sess"><div class="ei">📋</div><div class="ep">Aucune session</div><div class="es">Crée ta première session</div></div>
@@ -822,24 +821,20 @@ function renderSessions() {
   document.getElementById('sess-sub').textContent = window.SESS.length===0 ? 'Aucune session' : `${window.SESS.length} session(s)`;
 
   if (!window.SESS.length) {
-    list.innerHTML = ''; list.appendChild(empty); empty.style.display='flex';
-    list.classList.remove('bulk'); return;
+    list.innerHTML=''; list.appendChild(empty); empty.style.display='flex'; return;
   }
-  empty.style.display = 'none';
-
-  // Appliquer/retirer la classe bulk sur la liste
-  list.classList.toggle('bulk', window.BULK);
+  empty.style.display='none';
 
   list.innerHTML = window.SESS.map(s => {
     const sel = window.BULKSEL.has(s.id);
     return `
     <div class="s-card${sel?' sel':''}">
-      <div class="s-check" onclick="toggleBulkSel('${s.id}')">
+      <div class="s-check" style="display:flex" onclick="toggleBulkSel('${s.id}')">
         <div class="s-cb">
           <svg class="s-cb-tick" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="1.5,6.5 4.5,9.5 10.5,2.5"/></svg>
         </div>
       </div>
-      <div class="s-body" onclick="${window.BULK?`toggleBulkSel('${s.id}')`:`openSess('${s.id}')`}">
+      <div class="s-body" onclick="openSess('${s.id}')">
         <div class="s-icon">🏃</div>
         <div class="s-info">
           <div class="s-name">${s.name}</div>
@@ -847,49 +842,38 @@ function renderSessions() {
         </div>
         <div class="s-arr">›</div>
       </div>
-      <button class="s-del" onclick="event.stopPropagation();askDel('${s.id}','${s.name.replace(/'/g,"\\'")}')" title="Supprimer">🗑</button>
     </div>`;
   }).join('');
 }
 
 // ── BULK DELETE ─────────────────────────────────────────────────
-function toggleBulk() {
-  if (window.BULK) exitBulk(); else enterBulk();
-}
-function enterBulk() {
-  window.BULK = true; window.BULKSEL = new Set();
-  document.getElementById('bulk-bar').classList.add('on');
-  const btn = document.getElementById('btn-sel');
-  btn.classList.add('on'); btn.textContent = '✕ Annuler';
-  renderSessions();
-}
-function exitBulk() {
-  window.BULK = false; window.BULKSEL = new Set();
-  document.getElementById('bulk-bar').classList.remove('on');
-  document.getElementById('bulk-del-btn').style.display = '';
-  document.getElementById('bulk-conf-btn').style.display = 'none';
-  document.getElementById('bulk-lbl').textContent = '0 sélectionnée(s)';
-  const btn = document.getElementById('btn-sel');
-  btn.classList.remove('on'); btn.textContent = '☑ Sélectionner';
-  renderSessions();
+function toggleBulk() {}
+function enterBulk() {}
+function exitBulk() { window.BULKSEL=new Set(); document.getElementById('bulk-bar').style.display='none'; renderSessions(); }
+function bulkSelAll()  { window.SESS.forEach(s=>window.BULKSEL.add(s.id)); updateBulkBar(); renderSessions(); }
+function bulkSelNone() { window.BULKSEL=new Set(); updateBulkBar(); renderSessions(); }
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  bar.style.display = window.BULKSEL.size > 0 ? 'flex' : 'none';
+  document.getElementById('bulk-lbl').textContent = `${window.BULKSEL.size} sélectionnée(s)`;
 }
 function toggleBulkSel(id) {
   window.BULKSEL.has(id) ? window.BULKSEL.delete(id) : window.BULKSEL.add(id);
-  document.getElementById('bulk-lbl').textContent = `${window.BULKSEL.size} sélectionnée(s)`;
+  updateBulkBar();
   renderSessions();
 }
 function bulkDel() {
-  if (!window.BULKSEL.size) { toast('Sélectionne au moins une session'); return; }
-  document.getElementById('bulk-del-btn').style.display = 'none';
-  document.getElementById('bulk-conf-btn').style.display = '';
-  document.getElementById('bulk-lbl').textContent = `❗ Supprimer ${window.BULKSEL.size} session(s) ?`;
+  if (!window.BULKSEL.size) { toast('Coche au moins une session'); return; }
+  const n = window.BULKSEL.size;
+  document.getElementById('conf-msg').textContent = `Supprimer ${n} session(s) ? Action irréversible.`;
+  window.CONFCB = () => {
+    [...window.BULKSEL].forEach(id=>{ window.SESS=window.SESS.filter(s=>s.id!==id); fbDelSess(id); });
+    toast(`${n} session(s) supprimée(s) ✓`);
+    exitBulk();
+  };
+  document.getElementById('conf').classList.add('on');
 }
-function bulkConfirm() {
-  const ids = [...window.BULKSEL];
-  ids.forEach(id=>{ window.SESS=window.SESS.filter(s=>s.id!==id); fbDelSess(id); });
-  toast(`${ids.length} session(s) supprimée(s) ✓`);
-  exitBulk();
-}
+function bulkConfirm() {}
 
 function askDel(id, name) {
   document.getElementById('conf-msg').textContent = `Supprimer "${name}" ? Action irréversible.`;
@@ -962,7 +946,8 @@ function doStop() {
       const t = ct(p);
       if (!p.times) p.times = [];
       p.times.push(t);
-      p.elapsed=0; p.isRunning=false; p.startTime=null; p.laps=[];
+      p.elapsed=0; p.isRunning=false; p.startTime=null;
+      // Ne pas effacer les laps — ils restent visibles après le STOP
       stopped.push({p,t});
     }
   });
