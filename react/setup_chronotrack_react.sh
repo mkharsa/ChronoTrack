@@ -49,7 +49,7 @@ if [ -d "$PROJECT" ]; then
   if [ "$confirm" = "o" ]; then rm -rf "$PROJECT"; else echo "Annulé."; exit 0; fi
 fi
 
-npm create vite@latest chronotrack-react -- --template react
+npx create-vite@5.5.2 chronotrack-react --template react
 mv chronotrack-react "$HOME/"
 cd "$PROJECT"
 npm install
